@@ -24,6 +24,7 @@ import { Services } from './components/Services';
 import { Portfolio } from './components/Portfolio';
 import { ProcessTimeline } from './components/ProcessTimeline';
 import { Contact } from './components/Contact';
+import { AiAssistant } from './components/AiAssistant';
 
 import { 
   Building2, MessageSquareLock, ShieldAlert, Cpu, Lock, 
@@ -421,7 +422,9 @@ export default function App() {
           </Routes>
         </main>
 
-        <PublicFooter />
+        <PublicFooter theme={theme === 'dark' ? 'dark' : 'light'} toggleTheme={() => handleUpdateTheme(theme === 'dark' ? 'light' : 'dark')} />
+
+        <AiAssistant />
 
         <AnimatePresence>
           {showAuthModal && (
@@ -919,6 +922,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <AiAssistant />
     </div>
   );
 }

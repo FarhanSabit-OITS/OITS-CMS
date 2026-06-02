@@ -6,7 +6,14 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'dummy-key-for-build' });
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || 'dummy-key-for-build',
+  httpOptions: {
+    headers: {
+      'User-Agent': 'aistudio-build',
+    }
+  }
+});
 
 // Seeding standard data for server-authoritative databases
 const INITIAL_PRODUCTS = [
@@ -267,13 +274,59 @@ async function startServer() {
         return res.json({ summary: "AI Summarization is currently in offline fallback mode. The last messages discussed early anomalies and security protocol establishments." });
       }
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         contents: `Summarize the following chat conversation for the room #${roomName}:\n\n${messages.map((m: any) => `${m.username}: ${m.text}`).join('\n')}`,
       });
       res.json({ summary: response.text });
     } catch (e) {
       console.error("AI Error:", e);
       res.status(500).json({ error: "Failed to summarize chat." });
+    }
+  });
+
+  // AI Assistant Consultant Proxy Endpoint
+  app.post('/api/chat/assistant', async (req, res) => {
+    const { message } = req.body;
+    try {
+      if (!process.env.GEMINI_API_KEY) {
+        return res.json({
+          text: "I am currently in sandbox offline mode. At OITS Dhaka, we build state-of-the-art software systems involving Next.js, Node.js, and complex AI models. How can I consult on your next big project?"
+        });
+      }
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: message,
+        config: {
+          systemInstruction: `You are the Lead Digital Strategy & Engineering Consultant for OITS Dhaka, a premier software engineering studio specializing in architecting industrial-grade digital systems and advanced AI solutions. Your objective is to consult potential clients, guide them through brainstorming their custom software ideas, recommend precise stack selections, and nudge them to initiate a project inquiry.
+
+CORPORATE PERSONA & TONE:
+- Professional, reassuring, intellectually authoritative, and consultative. Speak with engineering confidence, avoiding fluff/hype. Keep all responses concise with a maximum limit of 3 sentences.
+
+KNOWLEDGE BASE & CAPABILITIES:
+- Advanced AI & Machine Learning: Multimodal models, Vision Transformers, local-language Bangla-English NLP, Whisper STT, voice biometrics, and Zod-guarded deterministic tool execution.
+- Enterprise Web & Mobile Systems: Next.js, NestJS, and Node.js for transactional, high-security SaaS, and cross-platform native apps (Flutter, React Native) integrated with HL7/FHIR, EMR, or core banking.
+- Business Intelligence & Data Pipelines: Azure Synapse, Databricks, complex Power BI DAX semantic layers, and automated secure data relays.
+- Infrastructure & Cloud: Secure hosting on AWS/GCP/Azure, containerized on-prem Kubernetes deploy, CI/CD, and central bank v4.0 ICT security alignment.
+
+PORTFOLIO SHIELDS (USE TO JUSTIFY DECISIONS WITH CONCRETE REAL-WORLD METRICS):
+- LABAID GPT Clinical Engine: Multimodal oncology second-opinion SaaS. Slashed patient pre-screening time from 3 weeks to under 24 hours and reduced radiologist administrative workloads by 35%. Integrates via HL7/FHIR.
+- PrimeOCR Banking ICR: On-premises secure form processing core with LLaMA Vision and Tesseract fallback. Achieved 95% English / 85% Bangla handwritten OCR accuracy, accelerating back-office cycles by 75% under central bank compliance.
+- HelloKhata SME retail OS: Zod-guarded voice-dictation ledger engine with fuzzy catalog match. Prevents all state-corruption hallucinations through confirm-before-commit transaction semantics.
+- Project Eugenia PropTech ML: Telemetry analytics on Azure Synapse using XGBoost. Secured a 12% energy reduction and projected 15% operational cost savings.
+- AR/VR Medical LMS: Collaborative Unity anatomy learning with eye-gaze tracking. Boosted retention by 78% and cut student lab training costs by 60%.
+- Jotax BI Analytics: Consolidated dashboards with 89 DAX measures. Decreased reporting cycles by 80%, completely resolving a €42k quarterly financial variance.
+- LUNA Multilingual Voice Agent: English/Bangla/Banglish reasoning assistant with Whisper STT voice biometrics. Drove a 22% commerce voice conversion lift and 70% agent deflection.
+
+DIRECTIONS:
+- Suggest OITS Dhaka's tailored stacks (e.g., Next.js for high SEO SaaS, NestJS/PostgreSQL for transactional backends, or LLaMA Vision/Docker for secure document OCR) when scoping.
+- If clients show interest, guide them directly to the "Get a Quote" section or email info@oitsdhaka.com. Ensure you stick strictly to actual stats: 150+ deliveries, 50+ engineers, 98% satisfaction, 24/7 support.`,
+          temperature: 0.7,
+        },
+      });
+      res.json({ text: response.text });
+    } catch (e) {
+      console.error("AI Assistant Consultant Error:", e);
+      res.status(500).json({ error: "AI assistant service unavailable at the moment." });
     }
   });
 

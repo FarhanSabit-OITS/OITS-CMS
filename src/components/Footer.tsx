@@ -22,8 +22,8 @@ import {
 import { COMPANY_NAME, NAV_ITEMS, SERVICES, ADDRESS, CONTACT_EMAIL, PHONE } from "../constants";
 
 interface FooterProps {
-  theme: "light" | "dark";
-  toggleTheme: () => void;
+  theme?: "light" | "dark";
+  toggleTheme?: () => void;
 }
 
 const SocialLink = ({
@@ -59,7 +59,7 @@ const SocialLink = ({
   </a>
 );
 
-export const Footer: React.FC<FooterProps> = ({ theme, toggleTheme }) => {
+export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = () => {} }) => {
   const [email, setEmail] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [status, setStatus] = useState<
