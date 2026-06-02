@@ -27,6 +27,10 @@ export default function ChatroomView({
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeUsers, setActiveUsers] = useState<{ id: string; username: string; avatar: string }[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+
+  // Local Search state
+  const [chatSearchKeyword, setChatSearchKeyword] = useState('');
+  const [chatSearchDate, setChatSearchDate] = useState('');
   
   // Encryption Passphrase States
   const [passphrase, setPassphrase] = useState('');
@@ -466,19 +470,109 @@ export default function ChatroomView({
           <span className="hidden leading-none border border-slate-200 bg-white px-2 py-0.5 rounded text-[10px] sm:inline text-slate-500 font-semibold font-mono">SHA-256 AES-GCM-256</span>
         </div>
 
+        {/* LOCAL SEARCH MESSAGES BAR */}
+        <div className="px-4 py-2 bg-slate-50 border-b border-slate-250 flex flex-wrap items-center justify-between gap-3 text-xs select-none">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono tracking-wider font-bold text-slate-400 uppercase">Trace Filter:</span>
+            <div className="relative">
+              <input
+                type="text"
+                value={chatSearchKeyword}
+                onChange={(e) => setChatSearchKeyword(e.target.value)}
+                placeholder="Sender or keyword..."
+                className="bg-white border border-slate-250 text-[10.5px] rounded-lg pl-2 pr-6 py-0.5 w-36 sm:w-44 font-medium focus:outline-none focus:border-blue-500 placeholder:text-slate-405 text-slate-800"
+              />
+              {chatSearchKeyword && (
+                <button
+                  type="button"
+                  onClick={() => setChatSearchKeyword('')}
+                  className="absolute top-1/2 right-2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-bold"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div className="relative">
+              <input
+                type="date"
+                value={chatSearchDate}
+                onChange={(e) => setChatSearchDate(e.target.value)}
+                className="bg-white border border-slate-250 text-[10.5px] rounded-lg px-2 py-0.5 focus:outline-none focus:border-blue-500 font-medium text-slate-800"
+              />
+              {chatSearchDate && (
+                <button
+                  type="button"
+                  onClick={() => setChatSearchDate('')}
+                  className="absolute top-1/2 right-2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-bold"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          {(chatSearchKeyword || chatSearchDate) && (
+            <div className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full font-sans tracking-wide">
+              Found {messages
+                .filter(m => !currentUser?.blockedUsers?.includes(m.username))
+                .filter(m => {
+                  if (chatSearchKeyword.trim()) {
+                    const textCache = decryptedCache[m.id]?.toLowerCase() || '';
+                    if (!textCache.includes(chatSearchKeyword.toLowerCase()) && !m.username.toLowerCase().includes(chatSearchKeyword.toLowerCase())) {
+                      return false;
+                    }
+                  }
+                  if (chatSearchDate) {
+                    const itemDate = new Date(m.timestamp).toISOString().substring(0, 10);
+                    if (itemDate !== chatSearchDate) return false;
+                  }
+                  return true;
+                }).length} secure payloads
+            </div>
+          )}
+        </div>
+
         {/* MESSAGES DISPLAY GRID */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 font-semibold">
-          {messages.filter(m => !currentUser?.blockedUsers?.includes(m.username)).length === 0 ? (
+        <div className="flex-1 overflow-y-auto p-4 space-y-5.5 font-semibold">
+          {messages
+            .filter(m => !currentUser?.blockedUsers?.includes(m.username))
+            .filter(m => {
+              if (chatSearchKeyword.trim()) {
+                const textCache = decryptedCache[m.id]?.toLowerCase() || '';
+                if (!textCache.includes(chatSearchKeyword.toLowerCase()) && !m.username.toLowerCase().includes(chatSearchKeyword.toLowerCase())) {
+                  return false;
+                }
+              }
+              if (chatSearchDate) {
+                const itemDate = new Date(m.timestamp).toISOString().substring(0, 10);
+                if (itemDate !== chatSearchDate) return false;
+              }
+              return true;
+            }).length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-10">
               <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-3 animate-pulse shadow-xs">
                 <Lock className="w-5 h-5" />
               </div>
-              <h4 className="text-xs font-bold text-slate-700">Tunnel Setup Succeeded</h4>
-              <p className="text-[10px] text-slate-400 font-sans max-w-xs mt-1 leading-normal font-medium">Send a message to instantiate the end-to-end encrypted packet loop (or unblock users in Settings).</p>
+              <h4 className="text-xs font-bold text-slate-700">No matching packet logs</h4>
+              <p className="text-[10px] text-slate-450 font-sans max-w-xs mt-1 leading-normal font-medium">Clear your Search Filters to restore complete channel streaming logs.</p>
             </div>
           ) : (
             messages
               .filter(msg => !currentUser?.blockedUsers?.includes(msg.username))
+              .filter(msg => {
+                if (chatSearchKeyword.trim()) {
+                  const textCache = decryptedCache[msg.id]?.toLowerCase() || '';
+                  if (!textCache.includes(chatSearchKeyword.toLowerCase()) && !msg.username.toLowerCase().includes(chatSearchKeyword.toLowerCase())) {
+                    return false;
+                  }
+                }
+                if (chatSearchDate) {
+                  const itemDate = new Date(msg.timestamp).toISOString().substring(0, 10);
+                  if (itemDate !== chatSearchDate) return false;
+                }
+                return true;
+              })
               .map((msg) => {
               const isSys = msg.senderId === 'sys' || msg.senderId === 'sys-notify';
               const isMe = msg.senderId === currentUser?.id;
@@ -486,7 +580,7 @@ export default function ChatroomView({
               if (isSys) {
                 return (
                   <div key={msg.id} className="flex justify-center select-none py-1">
-                    <span className="bg-slate-100 text-slate-600 font-sans font-medium text-[9px] uppercase tracking-wider px-3 py-1 rounded-full border border-slate-200 shadow-xs">
+                    <span className="bg-slate-105 text-slate-600 font-sans font-medium text-[9px] uppercase tracking-wider px-3 py-1 rounded-full border border-slate-200 shadow-xs">
                       {msg.ciphertext || (msg as any).systemAlert}
                     </span>
                   </div>
@@ -501,19 +595,19 @@ export default function ChatroomView({
                   <img src={msg.avatar} alt="avatar" className="w-9 h-9 rounded-full border border-slate-200 bg-slate-50 shrink-0 shadow-xs" referrerPolicy="no-referrer" />
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 font-sans text-[10px] leading-none mb-1">
-                      <span className="font-bold text-slate-700">{msg.username}</span>
+                      <span className="font-bold text-slate-705">{msg.username}</span>
                       <span className="text-slate-400 font-semibold">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
 
                     <div className={`p-3 rounded-2xl relative border ${
                       isMe 
-                        ? 'bg-blue-600 border-blue-500 text-white rounded-tr-none shadow-sm' 
-                        : 'bg-slate-100 border-slate-200 text-slate-800 rounded-tl-none shadow-xs'
+                        ? 'bg-blue-600 border-blue-500 text-white rounded-tr-none shadow-sm pb-4.5' 
+                        : 'bg-slate-100 border-slate-202 text-slate-800 rounded-tl-none shadow-xs'
                     }`}>
                       
                       {/* Side by side display format: CIPHERTEXT RAW */}
                       {msg.isEncrypted && (
-                        <div className="mb-2 p-1.5 bg-white text-[8.5px] font-mono border border-slate-200/55 shadow-inner text-slate-400 rounded truncate max-w-sm select-all">
+                        <div className="mb-2 p-1.5 bg-white text-[8.5px] font-mono border border-slate-200/55 shadow-inner text-slate-450 rounded truncate max-w-sm select-all">
                           <span className="text-slate-400 font-bold block pb-1">SERVER CIPHER:</span>
                           HEX_IV: {msg.iv.substring(0,6)}... <br />
                           PAYLOAD: {msg.ciphertext}
@@ -537,6 +631,15 @@ export default function ChatroomView({
                           <span className={isMe ? 'text-white font-semibold' : 'text-slate-800 font-semibold'}>{(msg as any).systemAlert || msg.ciphertext}</span>
                         )}
                       </div>
+
+                      {/* Dynamic Read Receipt Indicators for Me */}
+                      {isMe && (
+                        <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-semibold text-blue-200 select-none">
+                          <span className="font-mono text-[7px] uppercase tracking-wider text-blue-300">Delivered</span>
+                          <span className="text-white text-[10px] font-sans leading-none">✓✓</span>
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 </div>

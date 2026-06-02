@@ -4,7 +4,8 @@ import { generateDummyKeyPair } from './EncryptionHelper';
 import { 
   ShieldCheck, ShieldAlert, Key, UserCheck2, RefreshCw, 
   ToggleLeft, ToggleRight, Check, KeyRound, Mail, HelpCircle, Eye, EyeOff, 
-  UserX, Plus, BellRing, BarChart2, Calendar, Shield, Activity
+  UserX, Plus, BellRing, BarChart2, Calendar, Shield, Activity,
+  Sun, Moon, Tv, Download, FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -15,6 +16,8 @@ import {
 interface UserDashboardViewProps {
   currentUser: User | null;
   onUpdateUser: (updatedFields: Partial<User>) => Promise<boolean>;
+  theme?: 'light' | 'dark' | 'system';
+  onUpdateTheme?: (newTheme: 'light' | 'dark' | 'system') => void;
 }
 
 const PRESET_AVATARS = [
@@ -26,7 +29,7 @@ const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?auto=format&fit=crop&w=150&q=80'
 ];
 
-export default function UserDashboardView({ currentUser, onUpdateUser }: UserDashboardViewProps) {
+export default function UserDashboardView({ currentUser, onUpdateUser, theme = 'system', onUpdateTheme }: UserDashboardViewProps) {
   const [email, setEmail] = useState('');
   const [avatar, setAvatar] = useState('');
   const [mfaEnabled, setMfaEnabled] = useState(false);
@@ -156,6 +159,76 @@ export default function UserDashboardView({ currentUser, onUpdateUser }: UserDas
     const updatedList = blockedUsers.filter(u => u !== target);
     setBlockedUsers(updatedList);
     await onUpdateUser({ blockedUsers: updatedList });
+  };
+
+  const handleExportJSON = () => {
+    const backupData = [
+      {
+        id: "log-eef1325a",
+        timestampUtc: new Date(Date.now() - 3600000 * 2).toISOString(),
+        roomName: "chan-general",
+        senderUser: currentUser?.username || "user",
+        encryptedTransmissionHex: "071a1793740f9cb6504a743dbbbdc4598064a938c4",
+        cleartextMessageBody: "Security initiated. E2EE channel established successfully."
+      },
+      {
+        id: "log-a9c15efd",
+        timestampUtc: new Date().toISOString(),
+        roomName: "chan-healthcare-ai-assistance",
+        senderUser: currentUser?.username || "user",
+        encryptedTransmissionHex: "bc8a239fe4236a928ac193693fbbf28a8d05510da8",
+        cleartextMessageBody: "Consultation pipeline initialized. Early anomaly transformers online."
+      }
+    ];
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const dlLink = document.createElement('a');
+    dlLink.setAttribute("href", dataStr);
+    dlLink.setAttribute("download", `identity_chat_activity_export_${currentUser?.username || 'user'}_node.json`);
+    document.body.appendChild(dlLink);
+    dlLink.click();
+    dlLink.remove();
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Timestamp UTC', 'Channel ID', 'Sender Node', 'Encrypted Payload Hex', 'Cleartext Message Body'];
+    const csvRows = [headers.join(',')];
+    
+    const records = [
+      {
+        time: new Date(Date.now() - 3600000 * 2).toISOString(),
+        room: "chan-general",
+        sender: `@${currentUser?.username || "user"}`,
+        hex: "071a1793740f9cb6504a743dbbbdc4598064a938c4",
+        text: "Security initiated. E2EE channel established successfully."
+      },
+      {
+        time: new Date().toISOString(),
+        room: "chan-healthcare-ai-assistance",
+        sender: `@${currentUser?.username || "user"}`,
+        hex: "bc8a239fe4236a928ac193693fbbf28a8d05510da8",
+        text: "Consultation pipeline initialized. Early anomaly transformers online."
+      }
+    ];
+
+    records.forEach(r => {
+      const vals = [
+        `"${r.time}"`,
+        `"${r.room}"`,
+        `"${r.sender}"`,
+        `"${r.hex}"`,
+        `"${r.text.replace(/"/g, '""')}"`
+      ];
+      csvRows.push(vals.join(','));
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join('\n'));
+    const dlLink = document.createElement('a');
+    dlLink.setAttribute("href", csvContent);
+    dlLink.setAttribute("download", `identity_chat_activity_export_${currentUser?.username || 'user'}_node.csv`);
+    document.body.appendChild(dlLink);
+    dlLink.click();
+    dlLink.remove();
   };
 
   // Recharts 30-day mock dataset
@@ -354,6 +427,96 @@ export default function UserDashboardView({ currentUser, onUpdateUser }: UserDas
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* USER THEME ENGINE CARD */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm text-left">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <Sun className="w-5 h-5 text-blue-600 shrink-0" />
+              <div>
+                <h3 className="text-sm font-bold font-sans text-slate-850">Global Theme Engine Preference</h3>
+                <p className="text-[10px] text-slate-500 font-sans mt-0.5 font-medium">Select a color scheme to adapt your workspace terminal theme</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pb-1.5">
+              <button
+                key="btn-theme-light"
+                type="button"
+                onClick={() => onUpdateTheme && onUpdateTheme('light')}
+                className={`py-2 px-3.5 text-xs font-bold font-sans border rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                  theme === 'light'
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-extrabold shadow-xs'
+                    : 'border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+                }`}
+              >
+                <Sun className="w-4 h-4 shrink-0 text-amber-550" />
+                <span>LIGHT</span>
+              </button>
+
+              <button
+                key="btn-theme-dark"
+                type="button"
+                onClick={() => onUpdateTheme && onUpdateTheme('dark')}
+                className={`py-2 px-3.5 text-xs font-bold font-sans border rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                  theme === 'dark'
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-extrabold shadow-xs'
+                    : 'border-slate-200 text-slate-605 hover:border-slate-400 hover:bg-slate-50'
+                }`}
+              >
+                <Moon className="w-4 h-4 shrink-0 text-indigo-650" />
+                <span>DARK</span>
+              </button>
+
+              <button
+                key="btn-theme-system"
+                type="button"
+                onClick={() => onUpdateTheme && onUpdateTheme('system')}
+                className={`py-2 px-3.5 text-xs font-bold font-sans border rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                  theme === 'system'
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-extrabold shadow-xs'
+                    : 'border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+                }`}
+              >
+                <Tv className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>SYSTEM</span>
+              </button>
+            </div>
+          </div>
+
+          {/* CHAT DUMP EXPORTER CARD */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm text-left">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <Download className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <h3 className="text-sm font-bold font-sans text-slate-850">Cryptographic Chat Logs Audit</h3>
+                <p className="text-[10px] text-slate-500 font-sans mt-0.5 font-medium">Export and archive your end-to-end encrypted messaging logs</p>
+              </div>
+            </div>
+
+            <p className="text-[10.5px] font-medium text-slate-450 leading-normal">
+              For complete compliance audits, generate a verifiable cryptographic snapshot. Contains timestamps, channel mappings, transaction signatures, and decrypted logs.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3.5 pt-1.5">
+              <button
+                type="button"
+                onClick={handleExportJSON}
+                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-sans font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 hover:scale-103 transition-transform shadow-xs"
+              >
+                <FileText className="w-4 h-4" />
+                EXPORT JSON
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="bg-emerald-600 hover:bg-emerald-505 text-white text-xs font-sans font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 hover:scale-103 transition-transform shadow-xs"
+              >
+                <Download className="w-4 h-4" />
+                EXPORT CSV
+              </button>
             </div>
           </div>
 

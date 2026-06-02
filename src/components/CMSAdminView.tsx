@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Product, CaseStudy, CMSBlock, Channel, User } from '../types';
 import { 
   Lock, LayoutGrid, FileEdit, Plus, Trash2, ShieldAlert, Check, 
-  RefreshCw, Layers, Sparkles, Sliders, Settings, Hash, Search, ShieldCheck, Eye
+  RefreshCw, Layers, Sparkles, Sliders, Settings, Hash, Search, ShieldCheck, Eye,
+  Activity, Clock, Cpu, Download, HardDrive
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -70,6 +71,63 @@ export default function CMSAdminView({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [logFilter, setLogFilter] = useState('');
+
+  // System Health Monitor State
+  const [healthData, setHealthData] = useState<{
+    uptime: number;
+    latency: number;
+    connections: number;
+    cpuLoad: number;
+    memoryUtilization: number;
+  } | null>(null);
+
+  const fetchHealthData = () => {
+    fetch('/api/system-health')
+      .then(res => res.json())
+      .then(data => setHealthData(data))
+      .catch(err => console.error('Error fetching system health metrics:', err));
+  };
+
+  useEffect(() => {
+    fetchHealthData();
+    const interval = setInterval(fetchHealthData, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatUptimeValue = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs}h ${mins}m ${secs}s`;
+  };
+
+  const handleExportAuditsCSV = () => {
+    const headers = ['Timestamp UTC', 'Event Action', 'Operator Link', 'Transcript Details'];
+    const csvLines = [headers.join(',')];
+    
+    filteredLogs.forEach(log => {
+      const timeStr = new Date(log.timestamp).toISOString().replace(/"/g, '""');
+      const actionStr = log.action.replace(/"/g, '""');
+      const operatorStr = `@${log.username}`.replace(/"/g, '""');
+      const detailStr = log.detail.replace(/"/g, '""');
+      
+      const values = [
+        `"${timeStr}"`,
+        `"${actionStr}"`,
+        `"${operatorStr}"`,
+        `"${detailStr}"`
+      ];
+      csvLines.push(values.join(','));
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvLines.join('\n'));
+    const anchor = document.createElement('a');
+    anchor.setAttribute("href", csvContent);
+    anchor.setAttribute("download", `enterprise_audit_log_export_${new Date().toISOString().substring(0, 10)}.csv`);
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  };
 
   const fetchAuditLogs = () => {
     setLoadingLogs(true);
@@ -569,8 +627,60 @@ export default function CMSAdminView({
             exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
+            {/* SYSTEM HEALTH WIDGET PANEL */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                <div className="p-2.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl">
+                  <Clock className="w-5 h-5 shrink-0" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 dark:text-slate-500 block leading-none font-bold">SYSTEM UPTIME</span>
+                  <span className="text-sm font-semibold dark:text-slate-200 block mt-1.5 font-mono select-all">
+                    {healthData ? formatUptimeValue(healthData.uptime) : 'Loading...'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl relative">
+                  <Activity className="w-5 h-5 shrink-0" />
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 border border-white dark:border-slate-900 animate-pulse"></span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 dark:text-slate-500 block leading-none font-bold">TUNNEL LATENCY</span>
+                  <span className="text-sm font-semibold dark:text-slate-200 block mt-1.5 font-mono">
+                    {healthData ? `${healthData.latency} ms` : '6 ms'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                  <Layers className="w-5 h-5 shrink-0" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 dark:text-slate-500 block leading-none font-bold">ACTIVE TUNNEL NODES</span>
+                  <span className="text-sm font-semibold dark:text-slate-200 block mt-1.5 font-mono">
+                    {healthData ? `${healthData.connections} sessions` : '3 sessions'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-605 dark:text-indigo-400 rounded-xl">
+                  <Cpu className="w-5 h-5 shrink-0" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 dark:text-slate-500 block leading-none font-bold">CPU & MEMORY LOAD</span>
+                  <span className="text-xs font-semibold dark:text-slate-200 block mt-1.5 font-mono">
+                    {healthData ? `CPU: ${healthData.cpuLoad}% | RAM: ${healthData.memoryUtilization}%` : 'CPU: 3.4% | RAM: 45.4%'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Audit Logs Controls / Header bar */}
-            <div className="bg-white border border-slate-200 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
               <div className="relative flex-1 max-w-md font-semibold">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                   <Search className="w-4.5 h-4.5" />
@@ -580,16 +690,25 @@ export default function CMSAdminView({
                   value={logFilter}
                   onChange={(e) => setLogFilter(e.target.value)}
                   placeholder="Filter by operator, category, action detail..."
-                  className="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 text-xs rounded-xl pl-10 pr-4 py-2.5 text-slate-800 outline-none transition-all placeholder:text-slate-400"
+                  className="w-full bg-slate-50 dark:bg-slate-800 dark:text-slate-100 hover:border-slate-350 dark:hover:border-slate-700 border border-slate-200 dark:border-slate-700 focus:border-blue-500 text-xs rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all placeholder:text-slate-400"
                 />
               </div>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleExportAuditsCSV}
+                  className="bg-emerald-600 hover:bg-emerald-505 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-sans font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 hover:scale-103 transition-all select-none shadow-xs"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  EXPORT CSV
+                </button>
+
                 <button
                   type="button"
                   onClick={fetchAuditLogs}
                   disabled={loadingLogs}
-                  className="bg-slate-900 text-white text-xs font-sans font-bold px-4 py-2.5 border border-slate-700 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 hover:scale-105 transition-all select-none shadow-xs disabled:opacity-40"
+                  className="bg-slate-900 dark:bg-slate-800 text-white text-xs font-sans font-bold px-4 py-2.5 border border-slate-705 dark:border-slate-700 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 hover:scale-105 transition-all select-none shadow-xs disabled:opacity-40"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${loadingLogs ? 'animate-spin' : ''}`} />
                   REFRESH LOGS
@@ -598,54 +717,54 @@ export default function CMSAdminView({
             </div>
 
             {/* Audit list container */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="p-4 border-b border-secondary bg-slate-50 flex items-center justify-between select-none">
-                <div className="flex items-center gap-2 text-slate-700 font-sans font-bold text-xs">
-                  <ShieldCheck className="w-4 h-4 text-indigo-600 animate-pulse" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-secondary dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 flex items-center justify-between select-none">
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-sans font-bold text-xs">
+                  <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
                   <span>Administrative Audit History Logs ({filteredLogs.length} events logged)</span>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-slate-400">SHA-256 Crypto Verification Protocol Enabled</span>
+                <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500">SHA-256 Crypto Verification Protocol Enabled</span>
               </div>
 
               {filteredLogs.length === 0 ? (
-                <div className="p-16 text-center text-slate-500 font-sans text-xs">
+                <div className="p-16 text-center text-slate-505 dark:text-slate-400 font-sans text-xs">
                   No operational records found matching filter constraints inside active HSM databases.
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100 overflow-x-auto">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead>
-                      <tr className="bg-slate-50/50 border-b border-slate-150 text-[10px] font-sans font-bold text-slate-400 uppercase select-none">
+                      <tr className="bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-150 dark:border-slate-800 text-[10px] font-sans font-bold text-slate-4:00 dark:text-slate-500 uppercase select-none">
                         <th className="p-3.5 pl-6">TIMESTAMP UTC</th>
                         <th className="p-3.5">EVENT ACTION</th>
                         <th className="p-3.5">OPERATOR LINK</th>
                         <th className="p-3.5 pr-6">TRANSCRIPT METRICS</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                       {filteredLogs.map(log => {
                         const isPrimary = log.action.includes('Boot') || log.action.includes('Success');
                         const isCreateOrUpdate = log.action.includes('Create') || log.action.includes('Update') || log.action.includes('Onboarding');
                         return (
-                          <tr key={log.id} className="hover:bg-slate-50/55 transition-colors font-sans text-xs text-slate-700">
-                            <td className="p-3.5 pl-6 font-mono text-[10px] text-slate-450 whitespace-nowrap">
+                          <tr key={log.id} className="hover:bg-slate-50/55 dark:hover:bg-slate-800/40 transition-colors font-sans text-xs text-slate-700 dark:text-slate-300">
+                            <td className="p-3.5 pl-6 font-mono text-[10px] text-slate-450 dark:text-slate-500 whitespace-nowrap">
                               {new Date(log.timestamp).toLocaleString()}
                             </td>
                             <td className="p-3.5 whitespace-nowrap">
                               <span className={`text-[9px] font-mono px-2.5 py-0.5 border rounded-xl uppercase font-bold tracking-tight ${
                                 isPrimary 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900' 
                                   : isCreateOrUpdate 
-                                  ? 'bg-blue-50 text-blue-700 border-blue-100' 
-                                  : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900' 
+                                  : 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900'
                               }`}>
                                 {log.action}
                               </span>
                             </td>
-                            <td className="p-3.5 font-mono text-[10.5px] text-blue-700 font-bold whitespace-nowrap">
+                            <td className="p-3.5 font-mono text-[10.5px] text-blue-700 dark:text-blue-400 font-bold whitespace-nowrap">
                               @{log.username}
                             </td>
-                            <td className="p-3.5 pr-6 text-slate-600 font-mono text-[11px] leading-relaxed break-all">
+                            <td className="p-3.5 pr-6 text-slate-605 dark:text-slate-400 font-mono text-[11px] leading-relaxed break-all">
                               {log.detail}
                             </td>
                           </tr>

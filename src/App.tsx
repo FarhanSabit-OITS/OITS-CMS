@@ -8,7 +8,8 @@ import AuthModal from './components/AuthModal';
 import OpsControlTower from './components/OpsControlTower';
 import { 
   Building2, MessageSquareLock, ShieldAlert, Cpu, Lock, 
-  HelpCircle, UserCheck, Settings, LogOut, LayoutDashboard, KeyRound
+  HelpCircle, UserCheck, Settings, LogOut, LayoutDashboard, KeyRound,
+  Sun, Moon, Tv, Search, Keyboard, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -16,6 +17,28 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'showcase' | 'chat' | 'dashboard' | 'cms'>('overview');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Global Theme Pref State
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    return (localStorage.getItem('ai_innovations_theme') as 'light' | 'dark' | 'system') || 'system';
+  });
+
+  const handleUpdateTheme = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    localStorage.setItem('ai_innovations_theme', newTheme);
+  };
+
+  // Global Search State
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Accessibility Modal State
+  const [showAccessibilityModal, setShowAccessibilityModal] = useState(false);
+
+  // Automated Inactivity Session Timeout States
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(30);
 
   // Server memory database mirrors
   const [products, setProducts] = useState<Product[]>([]);
@@ -66,6 +89,107 @@ export default function App() {
       }
     }
   }, []);
+
+  // Theme preference live processor
+  useEffect(() => {
+    const handleThemeStyleProcess = () => {
+      const activeSysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const targetTheme = theme === 'system' ? (activeSysDark ? 'dark' : 'light') : theme;
+      if (targetTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    handleThemeStyleProcess();
+
+    const mediaDetector = window.matchMedia('(prefers-color-scheme: dark)');
+    if (theme === 'system') {
+      mediaDetector.addEventListener('change', handleThemeStyleProcess);
+    }
+    return () => mediaDetector.removeEventListener('change', handleThemeStyleProcess);
+  }, [theme]);
+
+  // Global Inactivity Detector
+  useEffect(() => {
+    if (!currentUser) {
+      setShowTimeoutWarning(false);
+      return;
+    }
+
+    const refreshLastActiveTime = () => setLastActivity(Date.now());
+
+    window.addEventListener('mousemove', refreshLastActiveTime);
+    window.addEventListener('keydown', refreshLastActiveTime);
+    window.addEventListener('click', refreshLastActiveTime);
+    window.addEventListener('scroll', refreshLastActiveTime);
+
+    return () => {
+      window.removeEventListener('mousemove', refreshLastActiveTime);
+      window.removeEventListener('keydown', refreshLastActiveTime);
+      window.removeEventListener('click', refreshLastActiveTime);
+      window.removeEventListener('scroll', refreshLastActiveTime);
+    };
+  }, [currentUser]);
+
+  // Session tick sweep
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const sessionTick = setInterval(() => {
+      const idleTime = Date.now() - lastActivity;
+      // 30 minutes in milliseconds
+      const limitRaw = 30 * 60 * 1000;
+      // Alert 30 seconds before timeout (at 29.5 minutes = 1770000 ms)
+      const warningLimit = 29.5 * 60 * 1000;
+
+      if (idleTime >= limitRaw) {
+        handleLogout();
+        setShowTimeoutWarning(false);
+        alert('Cryptographic session expired due to 30 minutes of inactivity. Handshake revoked.');
+      } else if (idleTime >= warningLimit) {
+        setShowTimeoutWarning(true);
+        setTimeLeft(Math.ceil((limitRaw - idleTime) / 1000));
+      } else {
+        setShowTimeoutWarning(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(sessionTick);
+  }, [currentUser, lastActivity]);
+
+  // Global Keyboard Accessibility Shortcuts Manager (Shift + ?)
+  useEffect(() => {
+    const handleAccessShortcuts = (e: KeyboardEvent) => {
+      if (e.key === '?' && e.shiftKey) {
+        e.preventDefault();
+        setShowAccessibilityModal(p => !p);
+      } else if (e.key === 'Escape') {
+        setShowAccessibilityModal(false);
+      } else if (e.altKey) {
+        if (e.key === '1') {
+          e.preventDefault();
+          setActiveTab('overview');
+        } else if (e.key === '2') {
+          e.preventDefault();
+          setActiveTab('showcase');
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleTabClick('chat');
+        } else if (e.key === '4') {
+          e.preventDefault();
+          handleTabClick('dashboard');
+        } else if (e.key === '5' && currentUser?.role === 'admin') {
+          e.preventDefault();
+          handleTabClick('cms');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleAccessShortcuts);
+    return () => window.removeEventListener('keydown', handleAccessShortcuts);
+  }, [currentUser, activeTab]);
 
   const handleAuthSuccess = (user: User) => {
     setCurrentUser(user);
@@ -204,11 +328,31 @@ export default function App() {
     setActiveTab(tab);
   };
 
+  const filteredSearchProducts = globalSearch.trim()
+    ? products.filter(p => 
+        p.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        p.category.toLowerCase().includes(globalSearch.toLowerCase())
+      )
+    : [];
+
+  const filteredSearchCaseStudies = globalSearch.trim()
+    ? caseStudies.filter(cs => 
+        cs.title.toLowerCase().includes(globalSearch.toLowerCase()) || 
+        cs.client.toLowerCase().includes(globalSearch.toLowerCase())
+      )
+    : [];
+
+  const filteredSearchChannels = globalSearch.trim()
+    ? channels.filter(c => 
+        c.name.toLowerCase().includes(globalSearch.toLowerCase())
+      )
+    : [];
+
   return (
-    <div className="min-h-screen bg-[#F1F5F9] text-slate-800 flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-800 flex flex-col justify-between selection:bg-blue-600 selection:text-white transition-colors duration-250">
       
       {/* HEADER NAVIGATION SHELL */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-xs">
+      <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-3 shadow-xs transition-colors duration-250">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <button 
             onClick={() => setActiveTab('overview')}
@@ -217,22 +361,103 @@ export default function App() {
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white shadow-xs">
               <Cpu className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             </div>
-            <div>
-              <span className="text-sm font-bold tracking-tight text-slate-850 block leading-none">AI INNOVATIONS</span>
-              <span className="text-[9px] font-sans text-blue-600 tracking-wider uppercase block font-bold leading-none mt-1">COGNITIVE PLATFORM</span>
+            <div className="hidden sm:block">
+              <span className="text-sm font-bold tracking-tight text-slate-850 dark:text-slate-100 block leading-none">AI INNOVATIONS</span>
+              <span className="text-[9px] font-sans text-blue-600 dark:text-blue-400 tracking-wider uppercase block font-bold leading-none mt-1">COGNITIVE PLATFORM</span>
             </div>
           </button>
 
-          {/* Secure status badges from Professional Polish design */}
-          <div className="hidden lg:flex items-center gap-3">
-            <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-full">
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse mt-0.5"></div>
-              <span className="text-[9.5px] font-semibold text-emerald-700 uppercase">E2E Encryption Active</span>
-            </div>
-            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 border border-blue-105 rounded-full">
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-0.5"></div>
-              <span className="text-[9.5px] font-semibold text-blue-700 uppercase font-bold">MONOREPO LIVE</span>
-            </div>
+          {/* GLOBAL SEARCH INPUT BAR */}
+          <div className="relative hidden md:block w-48 lg:w-64">
+            <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-405 dark:text-slate-500">
+              <Search className="w-3.5 h-3.5" />
+            </span>
+            <input
+              type="text"
+              value={globalSearch}
+              onChange={(e) => {
+                setGlobalSearch(e.target.value);
+                setShowSearchResults(true);
+              }}
+              onFocus={() => setShowSearchResults(true)}
+              placeholder="Search products, channels..."
+              className="w-full text-[10.5px] font-medium bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl pl-8 pr-3 py-1.5 text-slate-800 dark:text-slate-100 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold"
+            />
+            
+            {showSearchResults && globalSearch.trim() && (
+              <div className="absolute top-10 left-0 right-0 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50 text-left p-2.5 space-y-2 max-h-64 overflow-y-auto">
+                <div className="flex items-center justify-between px-1.5 pb-1 border-b border-slate-100 dark:border-slate-805 select-none">
+                  <span className="text-[8.5px] uppercase font-mono tracking-wider text-slate-400 font-bold">Matched Entities</span>
+                  <button onClick={() => setShowSearchResults(false)} className="text-slate-450 hover:text-slate-700">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                
+                {filteredSearchProducts.length > 0 && (
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] font-mono font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block px-1">PRODUCTS ({filteredSearchProducts.length})</span>
+                    {filteredSearchProducts.slice(0, 3).map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setActiveTab('showcase');
+                          setGlobalSearch('');
+                          setShowSearchResults(false);
+                        }}
+                        className="w-full text-left p-1 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg transition-colors text-[10px] font-sans block truncate"
+                      >
+                        <span className="font-bold text-slate-700 dark:text-slate-350 block truncate">{p.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredSearchChannels.length > 0 && (
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block px-1">CHANNELS ({filteredSearchChannels.length})</span>
+                    {filteredSearchChannels.slice(0, 3).map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setActiveRoomId(c.id);
+                          handleTabClick('chat');
+                          setGlobalSearch('');
+                          setShowSearchResults(false);
+                        }}
+                        className="w-full text-left p-1 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg transition-colors text-[10px] font-sans block truncate"
+                      >
+                        <span className="font-extrabold text-emerald-700 dark:text-emerald-500">#{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredSearchCaseStudies.length > 0 && (
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block px-1">CASE STUDIES ({filteredSearchCaseStudies.length})</span>
+                    {filteredSearchCaseStudies.slice(0, 3).map(cs => (
+                      <button
+                        key={cs.id}
+                        onClick={() => {
+                          setActiveTab('showcase');
+                          setGlobalSearch('');
+                          setShowSearchResults(false);
+                        }}
+                        className="w-full text-left p-1 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg transition-colors text-[10px] font-sans block truncate"
+                      >
+                        <span className="font-bold text-slate-700 dark:text-slate-350 block truncate">{cs.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredSearchProducts.length === 0 && filteredSearchChannels.length === 0 && filteredSearchCaseStudies.length === 0 && (
+                  <div className="text-center py-2 text-[10px] text-slate-400 dark:text-slate-600 font-sans">
+                    No corporate nodes found.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Nav pills */}
@@ -291,17 +516,38 @@ export default function App() {
           </nav>
 
           {/* User controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            
+            {/* Quick Header Theme Toggler */}
+            <button
+              onClick={() => handleUpdateTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-amber-400 transition-colors"
+              title={`Toggle Style Theme (Current: ${theme})`}
+              aria-label="Toggle dark mode theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+            </button>
+            
+            {/* Keyboard Shortcuts Help Badge */}
+            <button
+              onClick={() => setShowAccessibilityModal(true)}
+              className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-amber-400 transition-colors hidden sm:block"
+              title="Keyboard Accessibility Panel (Shift + ?)"
+              aria-label="Keyboard shortcuts helper panel"
+            >
+              <Keyboard className="w-4 h-4 shrink-0" />
+            </button>
+
             {currentUser ? (
-              <div className="flex items-center gap-2.5">
-                <div className="text-right hidden sm:block">
-                  <span className="text-xs font-bold text-slate-800 block leading-none">{currentUser.username}</span>
-                  <span className="text-[9px] font-mono text-slate-500 uppercase font-semibold block mt-1">{currentUser.role} node</span>
+              <div className="flex items-center gap-2">
+                <div className="text-right hidden lg:block">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block leading-none">{currentUser.username}</span>
+                  <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 uppercase font-semibold block mt-1">{currentUser.role} node</span>
                 </div>
-                <img src={currentUser.avatar} alt="identity avatar" className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 hidden sm:block" />
+                <img src={currentUser.avatar} alt="identity avatar" className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 hidden lg:block" referrerPolicy="no-referrer" />
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-slate-500 hover:text-red-600 transition-colors"
+                  className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                   title="Logout Session"
                 >
                   <LogOut className="w-4 h-4" />
@@ -375,6 +621,8 @@ export default function App() {
                 <UserDashboardView
                   currentUser={currentUser}
                   onUpdateUser={handleUpdateUser}
+                  theme={theme}
+                  onUpdateTheme={handleUpdateTheme}
                 />
               )}
 
@@ -424,8 +672,147 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* GLOBAL KEYBOARD ACCESSIBILITY short-cut modal */}
+      <AnimatePresence>
+        {showAccessibilityModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-left"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Keyboard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-sm font-bold font-sans text-slate-800 dark:text-slate-100">Keyboard Accessibility Dashboard</h3>
+                </div>
+                <button
+                  onClick={() => setShowAccessibilityModal(false)}
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-[11px] font-sans text-slate-500 dark:text-slate-400 mb-4 font-medium">
+                AI Innovations platform is structured for instant terminal access. Leverage these global standard shortcuts:
+              </p>
+
+              <div className="space-y-3 font-sans">
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Accessibility Manual Panel</span>
+                  <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">Shift + ?</kbd>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Go to Ops Control Tower</span>
+                  <div className="flex gap-1">
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">Alt</kbd>
+                    <span>+</span>
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">1</kbd>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Go to Directory Showcase</span>
+                  <div className="flex gap-1">
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">Alt</kbd>
+                    <span>+</span>
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">2</kbd>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Go to Secure Chat Space</span>
+                  <div className="flex gap-1">
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">Alt</kbd>
+                    <span>+</span>
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">3</kbd>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Go to Identity Dashboard</span>
+                  <div className="flex gap-1">
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">Alt</kbd>
+                    <span>+</span>
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">4</kbd>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">Go to CMS Admin Console</span>
+                    <span className="text-[9px] text-slate-405 block font-medium">Authorised role check is enforced</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">Alt</kbd>
+                    <span>+</span>
+                    <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">5</kbd>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-150/60 dark:border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 font-sans">Dismiss Panel / Warn States</span>
+                  <kbd className="px-2 py-1 text-[9.5px] font-bold font-mono bg-white dark:bg-slate-800 border border-slate-350 dark:border-slate-650 rounded-lg shadow-sm text-slate-700 dark:text-slate-200">ESC / Close</kbd>
+                </div>
+              </div>
+
+              <div className="mt-5 text-center font-mono text-[9px] text-slate-400 dark:text-slate-500 uppercase select-none">
+                AI INNOVATIONS SECURITY GROUP COMPLIANCE DIRECTIVE
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* SESSION INACTIVITY COMPLIANCE ALERT MODAL */}
+      <AnimatePresence>
+        {showTimeoutWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-slate-950 border-2 border-amber-500/80 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left space-y-4"
+            >
+              <div className="flex items-start gap-3">
+                <ShieldAlert className="w-10 h-10 text-amber-500 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-bold font-sans text-slate-800 dark:text-slate-100">Security warning: Idle handshakes</h3>
+                  <p className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">30-minute security clearance timing is expiring.</p>
+                </div>
+              </div>
+
+              <p className="text-[11.5px] text-slate-600 dark:text-slate-400 leading-relaxed font-sans font-medium">
+                You have been inactive for over 29 minutes. Your cryptographic seat tunnel will be automatically severed in <span className="font-bold text-amber-600 dark:text-amber-500 font-mono text-xs">{timeLeft} seconds</span> for data protection.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 pt-1.5 font-sans">
+                <button
+                  onClick={() => handleLogout()}
+                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 text-xs rounded-xl font-bold transition-all"
+                >
+                  LOGOUT NODE
+                </button>
+                <button
+                  onClick={() => {
+                    setLastActivity(Date.now());
+                    setShowTimeoutWarning(false);
+                  }}
+                  className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white text-xs rounded-xl font-extrabold shadow-sm hover:scale-102 transition-transform"
+                >
+                  EXTEND CLEARANCE
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* SWISS MODERN FOOTER */}
-      <footer className="border-t border-slate-200 bg-white py-6 px-6 text-center mt-12 overflow-hidden shrink-0 text-slate-600 shadow-sm">
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-6 px-6 text-center mt-12 overflow-hidden shrink-0 text-slate-600 dark:text-slate-400 shadow-sm transition-colors duration-250">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-xs text-slate-505 font-mono space-y-4 md:space-y-0">
           <div className="flex items-center gap-2 select-none">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping shrink-0" />
