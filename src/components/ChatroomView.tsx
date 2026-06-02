@@ -3,7 +3,7 @@ import { Channel, Message, User } from '../types';
 import { encryptText, decryptText } from './EncryptionHelper';
 import { 
   Send, Lock, Hash, Users, ShieldAlert, Bell, 
-  Settings, Key, AlertTriangle, Eye, EyeOff, Sparkles, UserCheck2, RefreshCw
+  Settings, Key, AlertTriangle, Eye, EyeOff, Sparkles, UserCheck2, RefreshCw, Mic, MicOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -49,6 +49,14 @@ export default function ChatroomView({
   // Push Notification state
   const [pushStatus, setPushStatus] = useState<NotificationPermission>('default');
   const [systemAlerts, setSystemAlerts] = useState<{ id: string; text: string }[]>([]);
+
+  // AI Summarization
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
+  // Speech Recognition API State
+  const [isListening, setIsListening] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -284,6 +292,47 @@ export default function ChatroomView({
     }
   };
 
+  const toggleSpeechRecognition = () => {
+    // @ts-ignore - SpeechRecognition is not fully typed in standard DOM yet
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechError("Speech recognition not supported in this browser.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setSpeechError(null);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInputMessage(prev => prev + (prev ? ' ' : '') + transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      setSpeechError("Microphone input failed. Try again.");
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
   const handleCreateChannelSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChanName.trim()) return;
@@ -293,6 +342,29 @@ export default function ChatroomView({
       setNewChanName('');
       setNewChanDesc('');
       setShowAddChan(false);
+    }
+  };
+
+  const handleSummarize = async () => {
+    setIsSummarizing(true);
+    setAiSummary(null);
+    try {
+      const msgsToSummarize = messages.slice(-10).map(m => {
+         const tCache = decryptedCache[m.id];
+         return { username: m.username, text: m.isEncrypted ? (tCache && !tCache.includes('Unable to Decrypt') ? tCache : '[Encrypted]') : (m as any).systemAlert || m.ciphertext };
+      });
+      const res = await fetch('/api/chat/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: activeChannel?.name, messages: msgsToSummarize })
+      });
+      const data = await res.json();
+      setAiSummary(data.summary || 'Summary unavailable.');
+    } catch (err) {
+      console.error(err);
+      setAiSummary('Failed to contact LLM backend.');
+    } finally {
+      setIsSummarizing(false);
     }
   };
 
@@ -510,6 +582,15 @@ export default function ChatroomView({
                 </button>
               )}
             </div>
+
+            <button
+              onClick={handleSummarize}
+              disabled={isSummarizing || messages.length === 0}
+              className="ml-2 bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3 h-3" />
+              {isSummarizing ? 'SUMMARIZING...' : 'AI SUMMARIZE'}
+            </button>
           </div>
 
           {(chatSearchKeyword || chatSearchDate) && (
@@ -535,6 +616,17 @@ export default function ChatroomView({
 
         {/* MESSAGES DISPLAY GRID */}
         <div className="flex-1 overflow-y-auto p-4 space-y-5.5 font-semibold">
+          {aiSummary && (
+            <div className="mb-4 bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-3 text-left shadow-sm relative">
+              <button onClick={() => setAiSummary(null)} className="absolute top-2 right-2 text-indigo-400 hover:text-indigo-600">×</button>
+              <Sparkles className="w-5 h-5 text-indigo-600 shrink-0" />
+              <div>
+                <span className="text-[10px] font-mono tracking-wider font-bold text-indigo-500 uppercase block mb-1">LLM Channel Summary (Last 10 msgs)</span>
+                <p className="text-xs text-indigo-900 font-medium leading-relaxed">{aiSummary}</p>
+              </div>
+            </div>
+          )}
+
           {messages
             .filter(m => !currentUser?.blockedUsers?.includes(m.username))
             .filter(m => {
@@ -658,22 +750,41 @@ export default function ChatroomView({
         )}
 
         {/* BOTTOM MESSAGE SENDING INPUT FORM */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-205 bg-slate-100 flex gap-3 shrink-0">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={handleInputChange}
-            placeholder={`Send secure, E2FE encrypted packet to #${activeChannel?.name}...`}
-            className="flex-1 bg-white border border-slate-250 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl text-slate-805 px-4 py-3 outline-none transition-all placeholder:text-slate-400 font-sans shadow-inner"
-          />
-          <button
-            type="submit"
-            disabled={!inputMessage.trim()}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-sans text-xs font-bold p-3 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-40"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+        <div className="flex flex-col border-t border-slate-205 bg-slate-100 shrink-0">
+          {speechError && (
+            <div className="px-4 py-1 text-[10px] text-red-600 font-bold bg-red-50 border-b border-red-100 animate-pulse">
+              {speechError}
+            </div>
+          )}
+          <form onSubmit={handleSendMessage} className="p-4 flex gap-3 relative">
+            <button
+              type="button"
+              onClick={toggleSpeechRecognition}
+              className={`absolute left-6 top-1/2 -translate-y-1/2 p-2 shrink-0 rounded-full transition-colors ${
+                isListening 
+                  ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' 
+                  : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'
+              }`}
+              title={isListening ? "Listening..." : "Dictate message"}
+            >
+              {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-slate-400" />}
+            </button>
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={handleInputChange}
+              placeholder={`Send secure, E2FE encrypted packet to #${activeChannel?.name}...`}
+              className="flex-1 bg-white border border-slate-250 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl text-slate-805 pl-12 pr-4 py-3 outline-none transition-all placeholder:text-slate-400 font-sans shadow-inner"
+            />
+            <button
+              type="submit"
+              disabled={!inputMessage.trim() && !isListening}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-sans text-xs font-bold p-3 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-40"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* RIGHT SIDEBAR PRESENCE MONITOR */}

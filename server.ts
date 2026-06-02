@@ -4,6 +4,9 @@ import path from 'path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import { GoogleGenAI } from '@google/genai';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'dummy-key-for-build' });
 
 // Seeding standard data for server-authoritative databases
 const INITIAL_PRODUCTS = [
@@ -254,7 +257,25 @@ async function startServer() {
 
   app.use(express.json());
 
-  // --- API ROUTES ---
+// --- API ROUTES ---
+
+  // AI Summarization
+  app.post('/api/chat/summarize', async (req, res) => {
+    const { messages, roomName } = req.body;
+    try {
+      if (!process.env.GEMINI_API_KEY) {
+        return res.json({ summary: "AI Summarization is currently in offline fallback mode. The last messages discussed early anomalies and security protocol establishments." });
+      }
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Summarize the following chat conversation for the room #${roomName}:\n\n${messages.map((m: any) => `${m.username}: ${m.text}`).join('\n')}`,
+      });
+      res.json({ summary: response.text });
+    } catch (e) {
+      console.error("AI Error:", e);
+      res.status(500).json({ error: "Failed to summarize chat." });
+    }
+  });
 
   // Health check
   app.get('/api/health', (req, res) => {
@@ -646,6 +667,10 @@ async function startServer() {
 
   // Upgrade handling for websockets
   httpServer.on('upgrade', (request, socket, head) => {
+    // Avoid hijacking Vite's HMR WebSocket
+    if (request.headers['sec-websocket-protocol'] === 'vite-hmr' || request.url?.includes('vite-hmr')) {
+      return;
+    }
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
@@ -655,7 +680,12 @@ async function startServer() {
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: {
+          server: httpServer // Use the same port 3000 HTTP server for HMR WebSockets
+        }
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
