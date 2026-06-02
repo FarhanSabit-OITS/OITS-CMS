@@ -61,3 +61,42 @@ export interface CMSBlock {
   content: string;
   category: string;
 }
+
+export enum SectionId {
+  HOME = 'home',
+  ABOUT = 'about',
+  SERVICES = 'services',
+  PORTFOLIO = 'portfolio',
+  PROCESS = 'process',
+  CONTACT = 'contact',
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  fullDescription?: string;
+  problemStatement?: string;
+  technicalApproach?: string;
+  results?: string;
+  technologies?: string[];
+  status?: string;
+  duration?: string;
+  imageUrl: string;
+  demoVideoUrl?: string;
+}
+
+export interface Service {
+  id: string;
+  category: string;
+  icon: string;
+  title: string;
+  description: string;
+  features: string[];
+  detailedFeatures?: string[];
+  advantages?: string[];
+  caseStudy?: { impact: string; quote: string; client: string };
+  documentationUrl?: string;
+}
+

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
 import { Product, CaseStudy, CMSBlock, Channel, User } from './types';
 import ShowcaseView from './components/ShowcaseView';
 import ChatroomView from './components/ChatroomView';
@@ -6,6 +7,19 @@ import UserDashboardView from './components/UserDashboardView';
 import CMSAdminView from './components/CMSAdminView';
 import AuthModal from './components/AuthModal';
 import OpsControlTower from './components/OpsControlTower';
+
+// Public website assets
+import { Header as PublicHeader } from './components/Header';
+import { Footer as PublicFooter } from './components/Footer';
+import { Hero } from './components/Hero';
+import { Marquee } from './components/Marquee';
+import { Testimonials } from './components/Testimonials';
+import { AboutPage } from './pages/AboutPage';
+import { ServicesPage } from './pages/ServicesPage';
+import { PortfolioPage } from './pages/PortfolioPage';
+import { WorkflowPage } from './pages/WorkflowPage';
+import { ContactPage } from './pages/ContactPage';
+
 import { 
   Building2, MessageSquareLock, ShieldAlert, Cpu, Lock, 
   HelpCircle, UserCheck, Settings, LogOut, LayoutDashboard, KeyRound,
@@ -14,6 +28,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'overview' | 'showcase' | 'chat' | 'dashboard' | 'cms'>('overview');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -313,10 +329,31 @@ export default function App() {
     }
   };
 
+  // Sync activeTab state from location pathname
+  useEffect(() => {
+    if (location.pathname === '/workspace') {
+      setActiveTab('overview');
+    } else if (location.pathname.startsWith('/workspace/showcase')) {
+      setActiveTab('showcase');
+    } else if (location.pathname.startsWith('/workspace/chat')) {
+      setActiveTab('chat');
+    } else if (location.pathname.startsWith('/workspace/dashboard')) {
+      setActiveTab('dashboard');
+    } else if (location.pathname.startsWith('/workspace/cms')) {
+      setActiveTab('cms');
+    }
+  }, [location.pathname]);
+
   // Security barrier logic for click triggers
   const handleTabClick = (tab: 'overview' | 'showcase' | 'chat' | 'dashboard' | 'cms') => {
-    if (tab === 'overview' || tab === 'showcase') {
-      setActiveTab(tab);
+    if (tab === 'overview') {
+      setActiveTab('overview');
+      navigate('/workspace');
+      return;
+    }
+    if (tab === 'showcase') {
+      setActiveTab('showcase');
+      navigate('/workspace/showcase');
       return;
     }
 
@@ -326,6 +363,7 @@ export default function App() {
     }
 
     setActiveTab(tab);
+    navigate(`/workspace/${tab}`);
   };
 
   const filteredSearchProducts = globalSearch.trim()
@@ -348,24 +386,63 @@ export default function App() {
       )
     : [];
 
+  const isWorkspace = location.pathname.startsWith('/workspace');
+
+  if (!isWorkspace) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col justify-between selection:bg-blue-600 selection:text-white transition-colors duration-250">
+        <PublicHeader theme={theme === 'dark' ? 'dark' : 'light'} toggleTheme={() => handleUpdateTheme(theme === 'dark' ? 'light' : 'dark')} />
+        
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={
+              <div className="pt-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+                <Hero />
+                <Marquee />
+                <Testimonials />
+              </div>
+            } />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/services" element={<ServicesPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/workflow" element={<WorkflowPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+
+        <PublicFooter />
+
+        <AnimatePresence>
+          {showAuthModal && (
+            <AuthModal
+              onClose={() => setShowAuthModal(false)}
+              onSuccess={handleAuthSuccess}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F1F5F9] text-slate-800 flex flex-col justify-between selection:bg-blue-600 selection:text-white transition-colors duration-250">
       
       {/* HEADER NAVIGATION SHELL */}
       <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-3 shadow-xs transition-colors duration-250">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <button 
-            onClick={() => setActiveTab('overview')}
+          <Link 
+            to="/"
             className="flex items-center gap-3 active:scale-98 transition-transform group text-left"
           >
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white shadow-xs">
               <Cpu className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-sm font-bold tracking-tight text-slate-850 dark:text-slate-100 block leading-none">AI INNOVATIONS</span>
+              <span className="text-sm font-bold tracking-tight text-slate-850 dark:text-slate-100 block leading-none font-sans font-bold">AI INNOVATIONS</span>
               <span className="text-[9px] font-sans text-blue-600 dark:text-blue-400 tracking-wider uppercase block font-bold leading-none mt-1">COGNITIVE PLATFORM</span>
             </div>
-          </button>
+          </Link>
 
           {/* GLOBAL SEARCH INPUT BAR */}
           <div className="relative hidden md:block w-48 lg:w-64">

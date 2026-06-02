@@ -211,3 +211,205 @@ export const INITIAL_CMS_BLOCKS: CMSBlock[] = [
     category: 'Legal & Ethics',
   },
 ];
+
+export const COMPANY_NAME = 'AI Innovations';
+export const TAGLINE = 'Enterprise AI Engineering. Crafted for Scale.';
+export const ADDRESS = 'House # 42, Road # 2/A, Block # Z, Dhanmondi, Dhaka 1209, Bangladesh';
+export const CONTACT_EMAIL = 'contact@ai-innovations.co';
+export const PHONE = '+880 2 9662026';
+
+export const NAV_ITEMS: { label: string; href: string; children?: { label: string; href: string }[] }[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Services', href: '/services' },
+  { label: 'Portfolio', href: '/portfolio' },
+  { label: 'Workflow', href: '/workflow' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' }
+];
+
+export const TECH_DOMAINS = [
+  { 
+    id: 'healthcare', 
+    label: 'Healthcare', 
+    skills: ['Python', 'PyTorch', 'TensorFlow', 'FastAPI', 'PostgreSQL'] 
+  },
+  { 
+    id: 'fintech', 
+    label: 'Fintech & Security', 
+    skills: ['Rust', 'PostgreSQL', 'Docker', 'Kubernetes', 'Redis'] 
+  },
+  { 
+    id: 'enterprise', 
+    label: 'Enterprise AI', 
+    skills: ['TypeScript', 'Nextdotjs', 'Tailwindcss', 'Nodedotjs', 'Vite'] 
+  },
+  { 
+    id: 'analytics', 
+    label: 'Data & Analytics', 
+    skills: ['D3dotjs', 'Pandas', 'Snowflake', 'Jupyter'] 
+  },
+];
+
+export const TECH_STACK = [
+  'Python', 'PyTorch', 'TensorFlow', 'TypeScript', 'Next.js', 
+  'FastAPI', 'Rust', 'Kubernetes', 'Docker', 'PostgreSQL', 
+  'Redis', 'AWS', 'Google Cloud', 'llama'
+];
+
+export const PROCESS_STEPS = [
+  {
+    id: 'step-discover',
+    number: '01',
+    icon: 'Search',
+    title: 'Discovery & Audit',
+    description: 'Deep technical audits of existing legacy infrastructure, data pipelines, and compliance baselines.'
+  },
+  {
+    id: 'step-design',
+    number: '02',
+    icon: 'Cpu',
+    title: 'Architectural Blueprint',
+    description: 'System design documents detailing encryption topologies, latency profiles, and model performance baselines.'
+  },
+  {
+    id: 'step-develop',
+    number: '03',
+    icon: 'Code',
+    title: 'Secure Agile Build',
+    description: 'Iterative secure software development cycle backed by automatic static and dynamic vulnerability analysis.'
+  },
+  {
+    id: 'step-deploy',
+    number: '04',
+    icon: 'Globe',
+    title: 'Multi-Cloud Deployment',
+    description: 'Hardened Kubernetes configurations with Zero-Trust ingress controllers and automated blue-green delivery pipelines.'
+  }
+];
+
+export const PROJECTS: any[] = [
+  {
+    id: 'proj-medical',
+    title: 'Autonomous Medical Scanning Triage',
+    category: 'Healthcare',
+    description: 'Deep vision transformer analyzing critical diagnostic scans in sub-millisecond ranges for rural clinics.',
+    fullDescription: 'Custom Vision Transformer (ViT) pipeline deployed at LABAID Cancer Hospital, reducing triage queues and enabling radiologist prioritization with high diagnostic speed.',
+    problemStatement: 'High radiologist workloads causing up to 4-week delays in rural diagnostic assessments.',
+    technicalApproach: 'Fined-tuned convolutional backbones coupled with localized clinical dictionary transformers.',
+    results: 'Early detection rates increased by 40%.',
+    technologies: ['Python', 'PyTorch', 'TypeScript', 'Kubernetes'],
+    status: 'Completed',
+    duration: '9 Months',
+    imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800',
+    demoVideoUrl: ''
+  },
+  {
+    id: 'proj-ledger',
+    title: 'Double-Entry Secured Financial Ledger',
+    category: 'Fintech & Security',
+    description: 'Fault-tolerant, immutable transaction engine complying with PCI-DSS guidelines and web3 integrations.',
+    fullDescription: 'Enterprise fintech transaction ledger with zero ledger discrepancies, double-entry validation logic, and secure hardware storage parameters.',
+    problemStatement: 'Audit failures and slow settlement times in regional payments core.',
+    technicalApproach: 'Built on PostgreSQL with cryptographically chained state updates and secure API wrappers.',
+    results: 'Ledger discrepancy rate lowered to 0%.',
+    technologies: ['Rust', 'PostgreSQL', 'Docker', 'AWS'],
+    status: 'Completed',
+    duration: '6 Months',
+    imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=800',
+    demoVideoUrl: ''
+  },
+  {
+    id: 'proj-ocr',
+    title: 'Handwritten Form Extraction ICR Engine',
+    category: 'Enterprise AI',
+    description: 'Multi-lingual optical character recognition engine with confidence-based human-in-the-loop escalation.',
+    fullDescription: 'ICR platform designed for commercial banks to extract content from handwritten account opening documents in mixed Bangla/English.',
+    problemStatement: 'High resource consumption during manual digitization of physical bank forms.',
+    technicalApproach: 'Tesseract engines optimized with customized LLaMA Vision tokenizers for localized handwriting patterns.',
+    results: 'Form ingestion speed increased by 75%.',
+    technologies: ['Python', 'TensorFlow', 'TypeScript', 'Docker'],
+    status: 'Completed',
+    duration: '4 Months',
+    imageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=800',
+    demoVideoUrl: ''
+  }
+];
+
+export const TESTIMONIALS = [
+  {
+    id: 't-1',
+    content: 'The deployment of AI Innovations custom diagnostic scan taging engine transformed our patient workflows completely. Turnaround times dropped from weeks to minutes.',
+    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=150',
+    name: 'Dr. Tariqul Islam',
+    role: 'Chief Medical Officer',
+    company: 'LABAID Cancer Hospital & LifePlus Telemedicine'
+  },
+  {
+    id: 't-2',
+    content: 'Their fintech core double-entry engine has given us total auditor confidence. Sanctions screening works flawlessly in sub-second timelines. Truly world-class.',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=150',
+    name: 'Faisal Karim',
+    role: 'Director of Security Systems',
+    company: 'Prime Commercial Bank'
+  },
+  {
+    id: 't-3',
+    content: 'Working with OITS on our corporate data transformation strategy has been stellar. Their agile teams delivered our document OCR engine ahead of timeline.',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150',
+    name: 'Anika Rahman',
+    role: 'Head of Digital Innovation',
+    company: 'APAC Partner Group'
+  }
+];
+
+export const SERVICES: any[] = [
+  {
+    id: 'serv-medical',
+    category: 'Healthcare',
+    icon: 'Activity',
+    title: 'Diagnostic Imaging Models',
+    description: 'Autonomous machine learning pipelines to detect malignancies and anomalies in MRI and CT scans.',
+    features: ['ISO 13485 Compliant ML', 'Sub-millisecond diagnostics', 'Bangla OCR Patient triage'],
+    detailedFeatures: ['Convolutional Neural Network (CNN) feature map extractions', 'Dynamic multi-class tumor boundaries classification', 'Automatic radiologist report draft synthesizers'],
+    advantages: ['85% reduction in scan processing latency', 'Zero-leakage local storage protocols', 'High clinician-in-the-loop satisfaction rating'],
+    caseStudy: {
+      impact: '85% Wait Time Compression',
+      quote: 'The vision systems provided early detections that allowed radiologists to prioritise critical cancer cases immediately.',
+      client: 'LABAID Oncology Group'
+    },
+    documentationUrl: '/services'
+  },
+  {
+    id: 'serv-fintech',
+    category: 'Fintech & Security',
+    icon: 'Wallet',
+    title: 'Enterprise Transaction Hubs',
+    description: 'Encrypted scalable Double-Entry ledger systems with automated sanctions checking.',
+    features: ['PCI-DSS compliant code', 'Double-entry audit assertions', 'Real-time sanctions filtering'],
+    detailedFeatures: ['HSM-secured cryptographic key rings', 'Automated anti-fraud transaction graph analyzers', 'Instant settlement ledger systems'],
+    advantages: ['100% auditable ledger entries', 'Zero single points of failure in ledger replication', '45% fraud attempts deflected at gateway stage'],
+    caseStudy: {
+      impact: '0% ledger imbalance recorded',
+      quote: 'The payment settlement pipeline achieved perfect replication and passed central-bank auditing rules cleanly.',
+      client: 'Prime Commercial Bank'
+    },
+    documentationUrl: '/services'
+  },
+  {
+    id: 'serv-document',
+    category: 'Enterprise AI',
+    icon: 'Cpu',
+    title: 'Intelligent ICR Solutions',
+    description: 'Dynamic local OCR pipelines parsing handwriting patterns in bilingual layouts.',
+    features: ['Handwriting ICR processing', 'Confidence metric escalations', 'Zero internet dependence'],
+    detailedFeatures: ['High-accuracy multilingual form coordinate alignments', 'Multi-layer confidence scores filtering', 'Secure maker-checker web control panels'],
+    advantages: ['75% processing speed improvements', 'Elimination of clerical transcription errors', 'Secure sandbox execution environments'],
+    caseStudy: {
+      impact: '75% Intake Acceleration Rate',
+      quote: 'Data typing tasks are automated completely, allowing branch staff to prioritize real relationships.',
+      client: 'Prime Commercial Core'
+    },
+    documentationUrl: '/services'
+  }
+];
+
