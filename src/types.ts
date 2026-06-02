@@ -19,6 +19,8 @@ export interface User {
   mfaEnabled: boolean;
   mfaSecret?: string;
   twoFactorVerified?: boolean;
+  blockedUsers?: string[];
+  pushEnabled?: boolean;
 }
 
 export interface Channel {

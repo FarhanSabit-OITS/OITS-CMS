@@ -143,6 +143,53 @@ let caseStudiesDb = [...INITIAL_CASE_STUDIES];
 let channelsDb = [...INITIAL_CHANNELS];
 let cmsBlocksDb = [...INITIAL_CMS_BLOCKS];
 
+// Activity logging system database and instantiator functions
+interface AuditLog {
+  id: string;
+  action: string;
+  username: string;
+  detail: string;
+  timestamp: string;
+}
+
+const auditLogsDb: AuditLog[] = [
+  {
+    id: 'audit-0',
+    action: 'System Boot',
+    username: 'system',
+    detail: 'E2EE primary cryptographic engine and AES-GCM kernels initialized.',
+    timestamp: new Date(Date.now() - 3600000 * 2.5).toISOString()
+  },
+  {
+    id: 'audit-1',
+    action: 'Secure Config',
+    username: 'system',
+    detail: 'Connected to on-prem regional HSM credentials keychains.',
+    timestamp: new Date(Date.now() - 3600000 * 2.1).toISOString()
+  },
+  {
+    id: 'audit-2',
+    action: 'Database Initialized',
+    username: 'system',
+    detail: 'Synchronized solutions catalog index (Products & Case Studies).',
+    timestamp: new Date(Date.now() - 3600000 * 1.8).toISOString()
+  }
+];
+
+function logAction(action: string, username: string, detail: string) {
+  auditLogsDb.unshift({
+    id: `audit-${Math.random().toString(36).substr(2, 9)}`,
+    action,
+    username,
+    detail,
+    timestamp: new Date().toISOString()
+  });
+  // Cap at 100 entries
+  if (auditLogsDb.length > 100) {
+    auditLogsDb.pop();
+  }
+}
+
 // Message storage: mapping roomName to message objects
 const chatMessagesDb: Record<string, any[]> = {
   'chan-general': [
@@ -162,7 +209,7 @@ const chatMessagesDb: Record<string, any[]> = {
   'chan-fintech-digital-wallet': [],
 };
 
-// Registered Users in system (supports MFA state)
+// Registered Users in system (supports MFA state, notification preferences, blocked list)
 const usersDb = new Map<string, any>([
   ['admin', {
     id: 'admin-id',
@@ -173,6 +220,8 @@ const usersDb = new Map<string, any>([
     mfaEnabled: true,
     mfaSecret: 'ADMINSecret2FAKeyXYZ',
     passwordHash: 'admin123', // Demo/mock password
+    blockedUsers: [],
+    pushEnabled: true,
   }],
   ['user', {
     id: 'user-id',
@@ -183,6 +232,8 @@ const usersDb = new Map<string, any>([
     mfaEnabled: false,
     mfaSecret: 'CLIENT2FASecretKeyABC',
     passwordHash: 'user123',
+    blockedUsers: [],
+    pushEnabled: false,
   }]
 ]);
 
@@ -221,6 +272,7 @@ async function startServer() {
       // update
       productsDb = productsDb.map(p => p.id === id ? { ...p, title, category, description, metricLabel, metricValue, status, icon } : p);
       const updated = productsDb.find(p => p.id === id);
+      logAction('Product Update', 'admin', `Modified AI Solution specifications for '${title}'.`);
       return res.json({ success: true, product: updated });
     } else {
       // create
@@ -237,14 +289,23 @@ async function startServer() {
         icon: icon || 'Cpu',
       };
       productsDb.push(newProduct);
+      logAction('Product Creation', 'admin', `Instantiated new AI Solution listing '${title}' under vertical '${category}'.`);
       return res.json({ success: true, product: newProduct });
     }
   });
 
   app.delete('/api/products/:id', (req, res) => {
     const { id } = req.params;
+    const prod = productsDb.find(p => p.id === id);
+    const title = prod ? prod.title : id;
     productsDb = productsDb.filter(p => p.id !== id);
+    logAction('Product Decommission', 'admin', `Permanently deleted AI Solution listing '${title}' from catalog store.`);
     res.json({ success: true });
+  });
+
+  // Audit Logs API Endpoint
+  app.get('/api/audit-logs', (req, res) => {
+    res.json(auditLogsDb);
   });
 
   // Case Studies
@@ -293,6 +354,7 @@ async function startServer() {
     const newChan = { id: cleanId, name, description, isStatic: false };
     channelsDb.push(newChan);
     chatMessagesDb[cleanId] = [];
+    logAction('Channel Creation', 'system', `Created secure E2EE communication router channel '#${name}'.`);
     return res.json({ success: true, channel: newChan });
   });
 
@@ -319,8 +381,11 @@ async function startServer() {
       mfaEnabled: false,
       mfaSecret: `SECRET-MFA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       passwordHash: password,
+      blockedUsers: [],
+      pushEnabled: false,
     };
     usersDb.set(username, newUser);
+    logAction('Onboarding Seat', username, `New user registration complete for email ${email}.`);
     // Return sanitized token-like payload
     const { passwordHash, ...sanitized } = newUser;
     res.json({ success: true, user: sanitized });
@@ -337,6 +402,7 @@ async function startServer() {
     
     // Check if MFA is required
     if (stored.mfaEnabled) {
+      logAction('Login Challenge', username, `Initiated dual-factor session verification request.`);
       return res.json({
         success: true,
         mfaRequired: true,
@@ -346,6 +412,7 @@ async function startServer() {
       });
     }
 
+    logAction('Login Success', username, `User session started. Cryptographic handshake finalized.`);
     return res.json({ success: true, mfaRequired: false, user: sanitized });
   });
 
@@ -362,6 +429,7 @@ async function startServer() {
       return res.status(400).json({ error: 'MFA Code must be exactly 6 numeric digits.' });
     }
 
+    logAction('Login Success', username, `User double-factor MFA token accepted and session established.`);
     // Accepting 123456 for easy demo or any 6-digit code containing correct sequence
     const { passwordHash, ...sanitized } = stored;
     return res.json({ success: true, user: sanitized });
@@ -383,17 +451,20 @@ async function startServer() {
         mfaEnabled: false,
         mfaSecret: 'OAUTH-NO-OTP-SECRET',
         passwordHash: 'oauth-secure-pass',
+        blockedUsers: [],
+        pushEnabled: false,
       };
       usersDb.set(username, existing);
     }
 
+    logAction('Federated Login', username, `Authenticated user session via provider auth interface [${provider}].`);
     const { passwordHash, ...sanitized } = existing;
     res.json({ success: true, provider, user: sanitized });
   });
 
   // User preference update endpoint
   app.post('/api/user/update', (req, res) => {
-    const { username, email, mfaEnabled, avatar, role } = req.body;
+    const { username, email, mfaEnabled, avatar, role, blockedUsers, pushEnabled } = req.body;
     const stored = usersDb.get(username);
     if (!stored) {
       return res.status(404).json({ error: 'User not found.' });
@@ -405,8 +476,12 @@ async function startServer() {
       avatar: avatar || stored.avatar,
       mfaEnabled: mfaEnabled !== undefined ? mfaEnabled : stored.mfaEnabled,
       role: role || stored.role,
+      blockedUsers: blockedUsers !== undefined ? blockedUsers : (stored.blockedUsers || []),
+      pushEnabled: pushEnabled !== undefined ? pushEnabled : (stored.pushEnabled || false),
     };
     usersDb.set(username, updatedUser);
+
+    logAction('Profile Update', username, `Modified secure directory preferences (Push alerts: ${updatedUser.pushEnabled}, Blocked list: ${(updatedUser.blockedUsers || []).length} users).`);
 
     const { passwordHash, ...sanitized } = updatedUser;
     res.json({ success: true, user: sanitized });

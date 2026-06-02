@@ -467,17 +467,19 @@ export default function ChatroomView({
         </div>
 
         {/* MESSAGES DISPLAY GRID */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 ? (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 font-semibold">
+          {messages.filter(m => !currentUser?.blockedUsers?.includes(m.username)).length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-10">
               <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-3 animate-pulse shadow-xs">
                 <Lock className="w-5 h-5" />
               </div>
               <h4 className="text-xs font-bold text-slate-700">Tunnel Setup Succeeded</h4>
-              <p className="text-[10px] text-slate-400 font-sans max-w-xs mt-1 leading-normal font-medium">Send a message to instantiate the end-to-end encrypted packet loop.</p>
+              <p className="text-[10px] text-slate-400 font-sans max-w-xs mt-1 leading-normal font-medium">Send a message to instantiate the end-to-end encrypted packet loop (or unblock users in Settings).</p>
             </div>
           ) : (
-            messages.map((msg) => {
+            messages
+              .filter(msg => !currentUser?.blockedUsers?.includes(msg.username))
+              .map((msg) => {
               const isSys = msg.senderId === 'sys' || msg.senderId === 'sys-notify';
               const isMe = msg.senderId === currentUser?.id;
 

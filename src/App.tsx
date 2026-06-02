@@ -5,6 +5,7 @@ import ChatroomView from './components/ChatroomView';
 import UserDashboardView from './components/UserDashboardView';
 import CMSAdminView from './components/CMSAdminView';
 import AuthModal from './components/AuthModal';
+import OpsControlTower from './components/OpsControlTower';
 import { 
   Building2, MessageSquareLock, ShieldAlert, Cpu, Lock, 
   HelpCircle, UserCheck, Settings, LogOut, LayoutDashboard, KeyRound
@@ -12,7 +13,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'showcase' | 'chat' | 'dashboard' | 'cms'>('showcase');
+  const [activeTab, setActiveTab] = useState<'overview' | 'showcase' | 'chat' | 'dashboard' | 'cms'>('overview');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -189,8 +190,8 @@ export default function App() {
   };
 
   // Security barrier logic for click triggers
-  const handleTabClick = (tab: 'showcase' | 'chat' | 'dashboard' | 'cms') => {
-    if (tab === 'showcase') {
+  const handleTabClick = (tab: 'overview' | 'showcase' | 'chat' | 'dashboard' | 'cms') => {
+    if (tab === 'overview' || tab === 'showcase') {
       setActiveTab(tab);
       return;
     }
@@ -210,7 +211,7 @@ export default function App() {
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <button 
-            onClick={() => setActiveTab('showcase')}
+            onClick={() => setActiveTab('overview')}
             className="flex items-center gap-3 active:scale-98 transition-transform group text-left"
           >
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white shadow-xs">
@@ -228,14 +229,24 @@ export default function App() {
               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse mt-0.5"></div>
               <span className="text-[9.5px] font-semibold text-emerald-700 uppercase">E2E Encryption Active</span>
             </div>
-            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full">
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 border border-blue-105 rounded-full">
               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-0.5"></div>
-              <span className="text-[9.5px] font-semibold text-blue-700 uppercase">2FA Compliant</span>
+              <span className="text-[9.5px] font-semibold text-blue-700 uppercase font-bold">MONOREPO LIVE</span>
             </div>
           </div>
 
           {/* Nav pills */}
           <nav className="flex items-center bg-slate-100 p-1 border border-slate-200 rounded-xl overflow-hidden font-sans font-bold shadow-inner">
+            <button
+              onClick={() => handleTabClick('overview')}
+              className={`text-[9.5px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
+                activeTab === 'overview' 
+                  ? 'bg-white text-slate-800 shadow-xs border border-slate-200/55' 
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
+              }`}
+            >
+              OPS CONTROL TOWER
+            </button>
             <button
               onClick={() => handleTabClick('showcase')}
               className={`text-[9.5px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
@@ -326,6 +337,18 @@ export default function App() {
               transition={{ duration: 0.25 }}
               className="max-w-7xl mx-auto py-4"
             >
+              {activeTab === 'overview' && (
+                <OpsControlTower
+                  currentUser={currentUser}
+                  products={products}
+                  caseStudies={caseStudies}
+                  cmsBlocks={cmsBlocks}
+                  channels={channels}
+                  onNavigate={handleTabClick}
+                  onOpenAuth={() => setShowAuthModal(true)}
+                />
+              )}
+
               {activeTab === 'showcase' && (
                 <ShowcaseView 
                   products={products}
