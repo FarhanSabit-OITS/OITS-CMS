@@ -73,6 +73,10 @@ export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = ()
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleScrollTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
@@ -342,14 +346,26 @@ export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = ()
 
           {/* Column 2: Newsletter Insight Subscription Engine (Spans 6/12) */}
           <div className="sm:col-span-6 flex flex-col space-y-3 sm:pl-6 h-full">
-            <div className="space-y-1">
-              <h4 className="text-slate-900 dark:text-white text-xs font-black uppercase tracking-[0.2em] font-mono">
-                STAY INFORMED
-              </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
-                Join our engineering collective for bi-weekly deep dives into
-                modern tech stacks.
-              </p>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h4 className="text-slate-900 dark:text-white text-xs font-black uppercase tracking-[0.2em] font-mono">
+                  STAY INFORMED
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
+                  Join our engineering collective for bi-weekly deep dives into
+                  modern tech stacks.
+                </p>
+              </div>
+              <button 
+                onClick={handleScrollTop}
+                className="group relative flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Scroll back to top"
+              >
+                <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:border-blue-600/30 group-hover:-translate-y-0.5 transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                </div>
+                <span className="text-[8px] font-mono font-black uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">TOP</span>
+              </button>
             </div>
 
             {/* Newsletter form with strict validation state */}

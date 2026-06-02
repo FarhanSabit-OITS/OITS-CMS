@@ -223,14 +223,8 @@ export const NAV_ITEMS: { label: string; href: string; icon?: string; children?:
   { label: 'Services', href: '/services', icon: 'Briefcase' },
   { label: 'Workflow', href: '/workflow', icon: 'Zap' },
   { label: 'Portfolio', href: '/portfolio', icon: 'Folder' },
-  { 
-    label: 'About', 
-    href: '/about', 
-    icon: 'Info',
-    children: [
-      { label: 'Contact', href: '/contact', icon: 'Mail' }
-    ]
-  }
+  { label: 'About', href: '/about', icon: 'Info' },
+  { label: 'Contact', href: '/contact', icon: 'Mail' }
 ];
 
 export const TECH_DOMAINS = [

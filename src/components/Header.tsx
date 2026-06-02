@@ -120,28 +120,31 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
           ))}
 
           <div className="ml-2 pl-4 border-l border-slate-200 dark:border-slate-700 flex items-center gap-3">
-             <button
-               onClick={() => window.location.href = '/workspace'}
-               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all hover:text-blue-600 dark:hover:text-sky-400"
+             <Link
+               to="/workspace"
+               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all hover:text-blue-600 dark:hover:text-sky-400 group relative"
                aria-label="Access Account Workspace"
              >
                <UserCircle size={22} strokeWidth={2.5} />
-             </button>
+               <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">WORKSPACE</span>
+             </Link>
 
              <Link 
                to="/contact"
-               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all hover:text-blue-600 dark:hover:text-sky-400"
+               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all hover:text-blue-600 dark:hover:text-sky-400 group relative"
                aria-label="Contact Us"
              >
                <Mail size={20} className="text-blue-600 dark:text-sky-400 opacity-90" />
+               <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">SUPPORT</span>
              </Link>
 
              <button
               onClick={toggleTheme}
-              className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all active:rotate-12"
+              className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all active:rotate-12 group relative"
               aria-label={theme === 'dark' ? 'Switch to light visual mode' : 'Switch to dark visual mode'}
              >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">{theme === 'dark' ? 'LIGHT' : 'DARK'}</span>
              </button>
           </div>
         </nav>
