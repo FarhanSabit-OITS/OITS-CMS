@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Home, ChevronDown, ArrowRight, Mail, Briefcase, Folder, Zap, Info, UserCircle } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, ChevronDown, ArrowRight, Mail, Briefcase, Zap, UserCircle, GalleryHorizontalEnd, Users } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { COMPANY_NAME, NAV_ITEMS } from '../constants';
 
 const IconMap: Record<string, any> = {
   Home,
   Briefcase,
-  Folder,
+  GalleryHorizontalEnd,
   Zap,
-  Info,
+  Users,
   Mail
 };
 

@@ -220,11 +220,19 @@ export const PHONE = '+880 2 9662026';
 
 export const NAV_ITEMS: { label: string; href: string; icon?: string; children?: { label: string; href: string; icon?: string }[] }[] = [
   { label: 'Home', href: '/', icon: 'Home' },
-  { label: 'Services', href: '/services', icon: 'Briefcase' },
-  { label: 'Workflow', href: '/workflow', icon: 'Zap' },
-  { label: 'Portfolio', href: '/portfolio', icon: 'Folder' },
-  { label: 'About', href: '/about', icon: 'Info' },
-  { label: 'Contact', href: '/contact', icon: 'Mail' }
+  { 
+    label: 'Services', 
+    href: '/services', 
+    icon: 'Briefcase',
+    children: [{ label: 'Workflow', href: '/workflow', icon: 'Zap' }]
+  },
+  { label: 'Portfolio', href: '/portfolio', icon: 'GalleryHorizontalEnd' },
+  { 
+    label: 'About', 
+    href: '/about', 
+    icon: 'Users',
+    children: [{ label: 'Contact', href: '/contact', icon: 'Mail' }] 
+  }
 ];
 
 export const TECH_DOMAINS = [

@@ -200,7 +200,7 @@ export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = ()
                 aria-label={`${COMPANY_NAME} homepage - Return to Landing Page`}
               >
                 <div
-                  className="w-24 h-12 sm:w-36 sm:h-18 md:w-40 md:h-20 flex items-center justify-center shrink-0 overflow-hidden"
+                  className="w-20 h-10 sm:w-28 sm:h-14 md:w-32 md:h-16 flex items-center justify-center shrink-0 overflow-hidden"
                   aria-hidden="true"
                 >
                   <img 

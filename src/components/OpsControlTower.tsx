@@ -385,8 +385,8 @@ export default function OpsControlTower({
               <TrendingUp className="w-4.5 h-4.5 text-blue-600" /> Platform Activity Trends
             </h3>
 
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[200px] w-full min-w-[200px] min-h-[200px]">
+              <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
                 <AreaChart data={platformActivityData}>
                   <defs>
                     <linearGradient id="colorMsg" x1="0" y1="0" x2="0" y2="1">
