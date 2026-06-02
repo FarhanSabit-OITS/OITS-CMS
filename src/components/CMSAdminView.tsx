@@ -64,7 +64,7 @@ export default function CMSAdminView({
   const [chanDesc, setChanDesc] = useState('');
   
   // Commit tracking
-  const [commitMessage, setCommitMessage] = useState('');
+  const [commitMessage, setCommitMessage] = useState('Operational synchronization: applying secure catalog spec updates.');
   
   // Status states
   const [saving, setSaving] = useState(false);

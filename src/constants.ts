@@ -212,7 +212,7 @@ export const INITIAL_CMS_BLOCKS: CMSBlock[] = [
   },
 ];
 
-export const COMPANY_NAME = 'AI Innovations';
+export const COMPANY_NAME = 'OITS Dhaka';
 export const TAGLINE = 'Enterprise AI Engineering. Crafted for Scale.';
 export const ADDRESS = 'House # 42, Road # 2/A, Block # Z, Dhanmondi, Dhaka 1209, Bangladesh';
 export const CONTACT_EMAIL = 'info@oitsdhaka.com';

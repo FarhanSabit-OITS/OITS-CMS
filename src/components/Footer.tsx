@@ -248,9 +248,6 @@ export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = ()
                     />
                   </svg>
                 </div>
-                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-500 to-blue-400 dark:from-blue-400 dark:to-blue-200 tracking-tighter">
-                  {COMPANY_NAME}
-                </span>
               </Link>
 
               {/* Accessibility Focused Theme controls */}

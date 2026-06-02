@@ -467,7 +467,7 @@ export const Services: React.FC = () => {
                       href={selectedService.documentationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full text-center px-6 py-3.5 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-705 border border-slate-200 dark:border-slate-720 text-slate-855 dark:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 focus-visible:ring-4 focus-visible:ring-blue-500/20"
+                      className="w-full text-center px-6 py-3.5 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-705 border border-slate-200 dark:border-slate-720 text-slate-800 dark:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 focus-visible:ring-4 focus-visible:ring-blue-500/20"
                     >
                       <BookOpen size={14} /> DOCS
                     </a>

@@ -14,11 +14,6 @@ import { Footer as PublicFooter } from './components/Footer';
 import { Hero } from './components/Hero';
 import { Marquee } from './components/Marquee';
 import { Testimonials } from './components/Testimonials';
-import { AboutPage } from './pages/AboutPage';
-import { ServicesPage } from './pages/ServicesPage';
-import { PortfolioPage } from './pages/PortfolioPage';
-import { WorkflowPage } from './pages/WorkflowPage';
-import { ContactPage } from './pages/ContactPage';
 import { About } from './components/About';
 import { Services } from './components/Services';
 import { Portfolio } from './components/Portfolio';
@@ -29,7 +24,7 @@ import { AiAssistant } from './components/AiAssistant';
 import { 
   Building2, MessageSquareLock, ShieldAlert, Cpu, Lock, 
   HelpCircle, UserCheck, Settings, LogOut, LayoutDashboard, KeyRound,
-  Sun, Moon, Tv, Search, Keyboard, X
+  Sun, Moon, Tv, Search, Keyboard, X, UserCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -413,11 +408,6 @@ export default function App() {
                 <Contact />
               </div>
             } />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/portfolio" element={<PortfolioPage />} />
-            <Route path="/workflow" element={<WorkflowPage />} />
-            <Route path="/contact" element={<ContactPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -453,8 +443,8 @@ export default function App() {
               <Cpu className="w-4 h-4 text-blue-600 group-hover:rotate-12 transition-transform" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-sm font-bold tracking-tight text-slate-850 dark:text-slate-100 block leading-none font-sans font-bold uppercase">OITS Dhaka</span>
-              <span className="text-[9px] font-sans text-blue-600 dark:text-blue-400 tracking-wider uppercase block font-bold leading-none mt-1">ENGINEERING PLATFORM</span>
+              <span className="text-sm font-black tracking-tight text-slate-850 dark:text-slate-100 block leading-none font-sans uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500 dark:from-white dark:to-slate-400">OITS Dhaka</span>
+              <div className="text-[9px] font-sans text-blue-600 dark:text-blue-400 tracking-wider uppercase block font-black leading-none mt-1">ENGINEERING PLATFORM</div>
             </div>
           </Link>
 
@@ -594,16 +584,18 @@ export default function App() {
             >
               IDENTITY
             </button>
-            <button
-              onClick={() => handleTabClick('cms')}
-              className={`text-[9.5px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
-                activeTab === 'cms' 
-                  ? 'bg-white text-slate-800 shadow-xs border border-slate-200/55' 
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
-              }`}
-            >
-              CMS PANEL
-            </button>
+            {currentUser?.role === 'admin' && (
+              <button
+                onClick={() => handleTabClick('cms')}
+                className={`text-[9.5px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
+                  activeTab === 'cms' 
+                    ? 'bg-white text-slate-800 shadow-xs border border-slate-200/55' 
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
+                }`}
+              >
+                CMS PANEL
+              </button>
+            )}
           </nav>
 
           {/* User controls */}
@@ -617,6 +609,16 @@ export default function App() {
               aria-label="Toggle dark mode theme"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+            </button>
+
+            {/* Account Icon Beside Theme Toggler */}
+            <button
+              onClick={() => handleTabClick('dashboard')}
+              className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-sky-400 transition-colors"
+              title="Authentication / Account Dashboard"
+              aria-label="Toggle account dashboard"
+            >
+              <UserCircle className="w-4 h-4 shrink-0" strokeWidth={2.5} />
             </button>
             
             {/* Keyboard Shortcuts Help Badge */}

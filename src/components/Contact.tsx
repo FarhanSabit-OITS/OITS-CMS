@@ -14,7 +14,6 @@ import {
   Smartphone,
   MessageCircle,
 } from "lucide-react";
-import { Button } from "./ui/Button";
 import { CONTACT_EMAIL, PHONE, ADDRESS } from "../constants";
 import { SectionId } from "../types";
 
@@ -159,14 +158,12 @@ export const Contact: React.FC = () => {
                   <p className="text-slate-600 dark:text-slate-300 text-sm mb-3.5 max-w-xs mx-auto">
                     Our engineering leads will respond shortly.
                   </p>
-                  <Button
-                    variant="primary"
-                    size="sm"
+                  <button
                     onClick={() => setStatus("idle")}
-                    className="rounded-xl px-4 h-10 border font-black text-xs shadow-md"
+                    className="inline-flex items-center justify-center rounded-xl font-black tracking-tight transition-all duration-300 ease-out focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.96] overflow-hidden relative transform-gpu will-change-transform bg-slate-950 text-white hover:bg-slate-900 border border-transparent dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl px-4 h-10 border font-black text-xs shadow-md"
                   >
                     SEND NEW INQUIRY
-                  </Button>
+                  </button>
                 </div>
               ) : status === "error" ? (
                 <div className="text-center py-6 animate-in zoom-in-95 duration-700">
@@ -179,14 +176,12 @@ export const Contact: React.FC = () => {
                   <p className="text-slate-650 dark:text-slate-400 text-sm mb-4 max-w-sm mx-auto font-medium">
                     Network timeout. Please retry the connection.
                   </p>
-                  <Button
-                    variant="primary"
-                    size="sm"
+                  <button
                     onClick={() => setStatus("idle")}
-                    className="rounded-xl px-4 h-10 border font-black text-xs flex items-center gap-2"
+                    className="inline-flex items-center justify-center rounded-xl font-black tracking-tight transition-all duration-300 ease-out focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.96] overflow-hidden relative transform-gpu will-change-transform bg-slate-950 text-white hover:bg-slate-900 border border-transparent dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl px-4 h-10 border font-black text-xs flex items-center gap-2"
                   >
                     <RefreshCcw size={14} /> RE-INNITIATE
-                  </Button>
+                  </button>
                 </div>
               ) : (
                 <form
@@ -292,12 +287,10 @@ export const Contact: React.FC = () => {
                     )}
                   </div>
                   <div className="pt-2">
-                    <Button
+                    <button
                       type="submit"
-                      variant="primary"
-                      size="sm"
-                      className={`w-full font-black text-sm h-10 active:scale-95 shadow-[0_5px_15px_-3px_rgba(0,0,0,0.4)] dark:shadow-[0_5px_15px_-3px_rgba(37,99,235,0.3)] bg-slate-950 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl py-1 md:py-1.5`}
                       disabled={status === "sending"}
+                      className={`inline-flex items-center justify-center rounded-xl transition-all duration-300 ease-out focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50 disabled:pointer-events-none overflow-hidden relative transform-gpu will-change-transform w-full font-black text-sm h-10 active:scale-95 shadow-[0_5px_15px_-3px_rgba(0,0,0,0.4)] dark:shadow-[0_5px_15px_-3px_rgba(37,99,235,0.3)] bg-slate-950 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl py-1 md:py-1.5`}
                     >
                       {status === "sending" ? (
                         <div className="flex items-center gap-4 animate-pulse">
@@ -313,7 +306,7 @@ export const Contact: React.FC = () => {
                           />
                         </span>
                       )}
-                    </Button>
+                    </button>
                   </div>
                 </form>
               )}

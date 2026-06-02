@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Home, ChevronDown, ArrowRight, Mail, Briefcase, Folder, Zap, Info } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, ChevronDown, ArrowRight, Mail, Briefcase, Folder, Zap, Info, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { COMPANY_NAME, NAV_ITEMS } from '../constants';
 
@@ -56,14 +56,6 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
           <circle cx="50" cy="50" r="45" fill="url(#header-logo-gradient)" />
           <text x="50" y="65" textAnchor="middle" fill="white" fontSize="40" fontWeight="900" fontFamily="sans-serif">IT</text>
         </svg>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xl font-black tracking-tighter text-blue-900 dark:text-white leading-none">
-          OITS
-        </span>
-        <span className="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-sky-400 uppercase leading-none mt-0.5">
-          Dhaka Ltd
-        </span>
       </div>
     </div>
   );
@@ -136,6 +128,13 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
           </Link>
           
           <div className="ml-2 pl-4 border-l border-slate-200 dark:border-slate-700 flex items-center gap-3">
+             <button
+               onClick={() => window.location.href = '/workspace'}
+               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all hover:text-blue-600 dark:hover:text-sky-400"
+               aria-label="Access Account Workspace"
+             >
+               <UserCircle size={22} strokeWidth={2.5} />
+             </button>
              <button
               onClick={toggleTheme}
               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all active:rotate-12"
