@@ -19,6 +19,11 @@ import { ServicesPage } from './pages/ServicesPage';
 import { PortfolioPage } from './pages/PortfolioPage';
 import { WorkflowPage } from './pages/WorkflowPage';
 import { ContactPage } from './pages/ContactPage';
+import { About } from './components/About';
+import { Services } from './components/Services';
+import { Portfolio } from './components/Portfolio';
+import { ProcessTimeline } from './components/ProcessTimeline';
+import { Contact } from './components/Contact';
 
 import { 
   Building2, MessageSquareLock, ShieldAlert, Cpu, Lock, 
@@ -399,7 +404,12 @@ export default function App() {
               <div className="pt-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
                 <Hero />
                 <Marquee />
+                <About />
+                <Services />
+                <Portfolio />
+                <ProcessTimeline />
                 <Testimonials />
+                <Contact />
               </div>
             } />
             <Route path="/about" element={<AboutPage />} />

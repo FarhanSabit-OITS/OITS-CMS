@@ -665,10 +665,12 @@ async function startServer() {
     });
   });
 
-  // Upgrade handling for websockets
   httpServer.on('upgrade', (request, socket, head) => {
     // Avoid hijacking Vite's HMR WebSocket
-    if (request.headers['sec-websocket-protocol'] === 'vite-hmr' || request.url?.includes('vite-hmr')) {
+    if (
+      request.headers['sec-websocket-protocol'] === 'vite-hmr' ||
+      (request.url && request.url.includes('vite-hmr'))
+    ) {
       return;
     }
     wss.handleUpgrade(request, socket, head, (ws) => {
