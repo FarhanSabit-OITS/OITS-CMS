@@ -8,7 +8,8 @@ const IconMap: Record<string, any> = {
   Briefcase,
   Folder,
   Zap,
-  Info
+  Info,
+  Mail
 };
 
 interface HeaderProps {
@@ -30,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
 
   const BrandLogo = () => (
     <div className="flex items-center gap-2">
-      <div className="w-10 h-10 flex items-center justify-center shrink-0 overflow-hidden" aria-hidden="true">
+      <div className="w-24 h-12 sm:w-36 sm:h-18 md:w-40 md:h-20 flex items-center justify-center shrink-0 overflow-hidden" aria-hidden="true">
         {/* We use an image if available, fallback to refined SVG logo matching OITS identity */}
         <img 
           src="/oits_logo_hq.png" 
@@ -93,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
                 ) : item.label === 'Home' ? (
                   <Home size={18} className="text-blue-600 dark:text-sky-400 opacity-90 transition-transform group-hover:scale-110" />
                 ) : null}
-                <span>{item.label}</span>
+                {item.label !== 'Home' && <span>{item.label}</span>}
                 {item.children && <ChevronDown size={14} className="opacity-50 group-hover:rotate-180 transition-transform duration-300" />}
               </Link>
               
@@ -118,15 +119,6 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
             </div>
           ))}
 
-          <Link 
-            to="/contact"
-            className="px-3 xl:px-4 py-2.5 rounded-full text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-sky-400 hover:bg-blue-50/80 dark:hover:bg-slate-900/40 transition-all duration-300 flex items-center gap-2.5 text-sm font-bold"
-            aria-label="Contact Us"
-          >
-            <Mail size={18} className="text-blue-600 dark:text-sky-400 opacity-90" />
-            <span>Contact</span>
-          </Link>
-          
           <div className="ml-2 pl-4 border-l border-slate-200 dark:border-slate-700 flex items-center gap-3">
              <button
                onClick={() => window.location.href = '/workspace'}
@@ -135,6 +127,15 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
              >
                <UserCircle size={22} strokeWidth={2.5} />
              </button>
+
+             <Link 
+               to="/contact"
+               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all hover:text-blue-600 dark:hover:text-sky-400"
+               aria-label="Contact Us"
+             >
+               <Mail size={20} className="text-blue-600 dark:text-sky-400 opacity-90" />
+             </Link>
+
              <button
               onClick={toggleTheme}
               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all active:rotate-12"
