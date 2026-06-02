@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Product, CaseStudy, CMSBlock, Channel, User } from '../types';
 import { 
   ShieldCheck, Cpu, Activity, Layers, Clock, Terminal, Globe, 
-  MessageSquareLock, UserCheck, Database, ArrowRight, Radio, KeyRound, Server, AlertCircle
+  MessageSquareLock, UserCheck, Database, ArrowRight, Radio, KeyRound, Server, AlertCircle, TrendingUp
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from 'recharts';
 
 interface OpsControlTowerProps {
   currentUser: User | null;
@@ -45,6 +46,17 @@ export default function OpsControlTower({
   const [pingResult, setPingResult] = useState<number | null>(null);
   const [recentLogs, setRecentLogs] = useState<MiniAuditLog[]>([]);
   const [fetchingLogs, setFetchingLogs] = useState(false);
+
+  // Mock activity data for recharts
+  const platformActivityData = [
+    { name: 'Mon', active: 45, messages: 120 },
+    { name: 'Tue', active: 52, messages: 155 },
+    { name: 'Wed', active: 61, messages: 198 },
+    { name: 'Thu', active: 58, messages: 180 },
+    { name: 'Fri', active: 75, messages: 245 },
+    { name: 'Sat', active: 40, messages: 90 },
+    { name: 'Sun', active: 35, messages: 75 },
+  ];
 
   // Fetch server health metrics
   const fetchHealth = async () => {
@@ -125,9 +137,26 @@ export default function OpsControlTower({
       </div>
 
       {/* TOP STATS STATS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
         
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0 }
+          }}
+          className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs"
+        >
           <div className="space-y-1.5">
             <span className="text-[10px] uppercase font-mono text-slate-400 font-bold tracking-wider block">Showcase Solutions</span>
             <span className="text-2xl font-extrabold text-slate-850 block leading-none">{products.length} Active Modules</span>
@@ -136,9 +165,15 @@ export default function OpsControlTower({
           <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
             <Database className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0 }
+          }}
+          className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs"
+        >
           <div className="space-y-1.5">
             <span className="text-[10px] uppercase font-mono text-slate-400 font-bold tracking-wider block">Communication Ports</span>
             <span className="text-2xl font-extrabold text-slate-850 block leading-none">{channels.length} Secured Links</span>
@@ -147,9 +182,15 @@ export default function OpsControlTower({
           <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shrink-0">
             <Radio className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0 }
+          }}
+          className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs"
+        >
           <div className="space-y-1.5">
             <span className="text-[10px] uppercase font-mono text-slate-400 font-bold tracking-wider block">CMS Block Copy</span>
             <span className="text-2xl font-extrabold text-slate-850 block leading-none">{cmsBlocks.length} Variables</span>
@@ -158,9 +199,15 @@ export default function OpsControlTower({
           <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
             <Layers className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0 }
+          }}
+          className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center justify-between shadow-xs"
+        >
           <div className="space-y-1.5">
             <span className="text-[10px] uppercase font-mono text-slate-400 font-bold tracking-wider block">Telemetry Health</span>
             <span className="text-2xl font-extrabold text-slate-850 block leading-none">
@@ -171,9 +218,9 @@ export default function OpsControlTower({
           <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
             <Activity className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
-      </div>
+      </motion.div>
 
       {/* CONSOLIDATED CORE WORKSPACE GRIDS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -333,12 +380,33 @@ export default function OpsControlTower({
           </div>
 
           {/* TELEMETRY PACKET PING WIDGET */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
             <h3 className="text-sm font-bold font-sans text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-1.5">
-              <Clock className="w-4.5 h-4.5 text-blue-600" /> Host Network Telemetry
+              <TrendingUp className="w-4.5 h-4.5 text-blue-600" /> Platform Activity Trends
             </h3>
 
-            <div className="space-y-3 font-semibold text-xs">
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={platformActivityData}>
+                  <defs>
+                    <linearGradient id="colorMsg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} stroke="#94a3b8" />
+                  <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="#94a3b8" />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                  />
+                  <Area type="monotone" dataKey="messages" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorMsg)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="space-y-3 font-semibold text-xs pt-4 border-t border-slate-50">
               <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span className="text-[10px] uppercase font-mono text-slate-450 block">SIMULATE DELAY PROBE:</span>
                 <button

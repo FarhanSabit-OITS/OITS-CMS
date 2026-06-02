@@ -132,6 +132,16 @@ export default function CMSAdminView({
     anchor.remove();
   };
 
+  const handleExportProductsJSON = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products, null, 2));
+    const anchor = document.createElement('a');
+    anchor.setAttribute("href", dataStr);
+    anchor.setAttribute("download", `solutions_catalog_backup_${new Date().toISOString().substring(0, 10)}.json`);
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
   const fetchAuditLogs = () => {
     setLoadingLogs(true);
     fetch('/api/audit-logs')
@@ -354,24 +364,33 @@ export default function CMSAdminView({
               
               {/* SOLUTIONS MANAGEMENT GRID CARD */}
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                   <h3 className="text-sm font-bold font-sans text-slate-800 flex items-center gap-2">
                     <Layers className="w-4.5 h-4.5 text-blue-600" /> AI Solutions Catalog Index ({products.length})
                   </h3>
-                  <button
-                    onClick={() => {
-                      setEditingProductId('new');
-                      setProdTitle('');
-                      setProdCat('');
-                      setProdDesc('');
-                      setProdMetricLab('');
-                      setProdMetricVal('');
-                      setProdStatus('Demo Only');
-                    }}
-                    className="bg-blue-600 hover:bg-blue-550 text-white text-[11px] font-sans font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1 shadow-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> ADD NEW CATALOG
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExportProductsJSON}
+                      className="text-[10px] font-sans font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-3 py-2"
+                      title="Export Catalog as JSON"
+                    >
+                      <Download className="w-3.5 h-3.5" /> EXPORT JSON
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingProductId('new');
+                        setProdTitle('');
+                        setProdCat('');
+                        setProdDesc('');
+                        setProdMetricLab('');
+                        setProdMetricVal('');
+                        setProdStatus('Demo Only');
+                      }}
+                      className="bg-blue-600 hover:bg-blue-550 text-white text-[11px] font-sans font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1 shadow-xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> ADD NEW CATALOG
+                    </button>
+                  </div>
                 </div>
 
                 {/* Editing state drawer */}

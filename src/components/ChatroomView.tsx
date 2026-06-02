@@ -42,6 +42,9 @@ export default function ChatroomView({
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Online Presence Pulse
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+
   // New Channel states
   const [newChanName, setNewChanName] = useState('');
   const [newChanDesc, setNewChanDesc] = useState('');
@@ -163,6 +166,7 @@ export default function ChatroomView({
         } else if (payload.type === 'presence') {
           if (payload.room === activeRoomId) {
             setActiveUsers(payload.users);
+            setOnlineUserIds(payload.users.map((u: any) => u.id));
           }
 
         } else if (payload.type === 'typing') {
@@ -651,7 +655,12 @@ export default function ChatroomView({
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <Hash className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600 font-bold' : 'text-slate-400'}`} />
+                    <div className="relative">
+                      <Hash className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600 font-bold' : 'text-slate-400'}`} />
+                      {isActive && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse"></span>
+                      )}
+                    </div>
                     <div className="truncate">
                       <span className="text-xs font-bold block leading-none">{chan.name}</span>
                       <span className="text-[10px] text-slate-400 truncate block mt-1 font-medium">{chan.description || 'Secure communication link'}</span>
@@ -914,10 +923,21 @@ export default function ChatroomView({
                   <div className="space-y-1">
                     <div className={`flex items-center gap-2 font-sans text-[10px] leading-none mb-1 ${isMe ? 'justify-end' : ''}`}>
                       <span className="font-bold text-slate-700">{msg.username}</span>
-                      <span className="text-slate-400 font-semibold" title={new Date(msg.timestamp).toLocaleString()}>
+                      <span 
+                        className="text-slate-400 font-semibold cursor-help border-b border-transparent hover:border-slate-300 transition-colors" 
+                        title={new Date(msg.timestamp).toLocaleString(undefined, {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                        })}
+                      >
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      {msg.isPinned && <Pin className="w-3 h-3 text-amber-600 shrink-0 rotate-45" />}
+                      {msg.isPinned && <Pin className="w-3 h-3 text-amber-600 shrink-0 rotate-45 shrink-0" />}
                     </div>
 
                     <div className={`p-3 rounded-2xl relative border transition-all ${
@@ -986,12 +1006,23 @@ export default function ChatroomView({
         </div>
 
         {/* TYPING STATUS REPORT LINE */}
-        {typingUsers.length > 0 && (
-          <div className="px-4 py-1.5 bg-slate-50 text-[9px] font-sans font-bold text-blue-600 flex items-center gap-2 select-none animate-pulse shrink-0 border-t border-slate-200">
-            <RefreshCw className="w-3 h-3 text-blue-600 animate-spin shrink-0" />
-            <span>{typingUsers.join(', ')} is constructing message parcel...</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {typingUsers.length > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-4 py-1.5 bg-slate-50 text-[9px] font-sans font-bold text-blue-600 flex items-center gap-2 select-none shrink-0 border-t border-slate-200"
+            >
+              <div className="flex gap-1 shrink-0">
+                <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce"></span>
+              </div>
+              <span className="truncate">{typingUsers.join(', ')} is constructing message parcel...</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* BOTTOM MESSAGE SENDING INPUT FORM */}
         <div className="flex flex-col border-t border-slate-205 bg-slate-100 shrink-0">

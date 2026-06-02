@@ -740,6 +740,8 @@ export default function App() {
         )}
       </main>
 
+      <BackToTop />
+
       {/* GLOBAL AUTHORIZATION POPUP OVERLAY MODAL */}
       <AnimatePresence>
         {showAuthModal && (

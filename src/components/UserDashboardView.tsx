@@ -54,6 +54,10 @@ export default function UserDashboardView({ currentUser, onUpdateUser, theme = '
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [mfaError, setMfaError] = useState<string | null>(null);
 
+  // Advanced Notification settings
+  const [quietHours, setQuietHours] = useState({ enabled: false, start: '22:00', end: '08:00' });
+  const [priorityChannels, setPriorityChannels] = useState<string[]>(['chan-general']);
+
   // Chart view tab
   const [activeChartTab, setActiveChartTab] = useState<'chat' | 'security'>('chat');
   const [activeMainTab, setActiveMainTab] = useState<'profile' | 'security' | 'activity'>('profile');
@@ -324,6 +328,65 @@ export default function UserDashboardView({ currentUser, onUpdateUser, theme = '
         </div>
       )}
 
+      {/* SECURITY HEALTH STATUS CHECKLIST WIDGET */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-700">
+        <div className="md:col-span-1 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SECURITY SCORE</span>
+              <div className="flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span className="text-lg font-black text-slate-900">{mfaEnabled ? '98' : '65'}/100</span>
+              </div>
+            </div>
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-6">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: mfaEnabled ? '98%' : '65%' }}
+                className={`h-full ${mfaEnabled ? 'bg-emerald-500' : 'bg-amber-500'}`}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'MFA Enabled', active: mfaEnabled },
+              { label: 'E2E Encryption Active', active: true },
+              { label: 'Session Integrity', active: true },
+              { label: 'WebAuthn Configured', active: false }
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'}`}>
+                  {item.active && <Check className="w-2 h-2" />}
+                </div>
+                <span className={`text-[10px] font-bold ${item.active ? 'text-slate-600' : 'text-slate-400'}`}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group">
+          <div className="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-110 transition-transform duration-1000">
+            <Shield className="w-48 h-48" />
+          </div>
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold font-sans">Harden your access with WebAuthn</h3>
+              <p className="text-xs text-blue-100 max-w-sm leading-relaxed font-semibold">
+                Enable passwordless biometric authentication using TouchID, FaceID, or physical YubiKeys for uncompromised workstation security.
+              </p>
+            </div>
+            <div className="pt-6">
+              <button 
+                onClick={() => alert("Biometric handshake API initiated. Please confirm on your local device hardware.")}
+                className="bg-white text-blue-700 px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-50 transition-colors shadow-xl"
+              >
+                Enroll Biometric Node
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {activeMainTab === 'profile' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
           
@@ -398,8 +461,8 @@ export default function UserDashboardView({ currentUser, onUpdateUser, theme = '
                 </div>
 
                 {/* Notification preference toggles */}
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <h4 className="text-[10px] uppercase font-sans tracking-widest text-slate-500 font-bold mb-2">Notification Preferences</h4>
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h4 className="text-[10px] uppercase font-sans tracking-widest text-slate-500 font-bold mb-1">Advanced Alert Logic</h4>
                   
                   <div className="flex items-center justify-between">
                     <div>
@@ -414,6 +477,45 @@ export default function UserDashboardView({ currentUser, onUpdateUser, theme = '
                       {pushEnabled ? <ToggleRight className="w-10 h-10 text-blue-600" /> : <ToggleLeft className="w-10 h-10" />}
                     </button>
                   </div>
+
+                  {pushEnabled && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="space-y-4 pl-4 border-l-2 border-slate-100 pt-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[11px] font-bold text-slate-700 block">Enforce Quiet Hours</span>
+                          <span className="text-[9px] text-slate-400 font-sans block">Suppress all non-critical alerts during rest periods</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setQuietHours({...quietHours, enabled: !quietHours.enabled})}
+                          className="text-slate-400 hover:text-slate-700"
+                        >
+                          {quietHours.enabled ? <ToggleRight className="w-8 h-8 text-blue-600" /> : <ToggleLeft className="w-8 h-8" />}
+                        </button>
+                      </div>
+
+                      {quietHours.enabled && (
+                        <div className="grid grid-cols-2 gap-2 pb-2">
+                          <input 
+                            type="time" 
+                            value={quietHours.start} 
+                            onChange={(e) => setQuietHours({...quietHours, start: e.target.value})}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-700"
+                          />
+                          <input 
+                            type="time" 
+                            value={quietHours.end} 
+                            onChange={(e) => setQuietHours({...quietHours, end: e.target.value})}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-700"
+                          />
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
                 </div>
 
                 <button
