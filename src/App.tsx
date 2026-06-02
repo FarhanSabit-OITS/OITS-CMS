@@ -448,12 +448,13 @@ export default function App() {
             to="/"
             className="flex items-center gap-3 active:scale-98 transition-transform group text-left"
           >
-            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white shadow-xs">
-              <Cpu className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+            <div className="w-8 h-8 flex items-center justify-center shrink-0">
+              <img src="/oits_logo.png" alt="" className="w-full h-full object-contain" onError={(e) => (e.target as any).style.display = 'none'} />
+              <Cpu className="w-4 h-4 text-blue-600 group-hover:rotate-12 transition-transform" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-sm font-bold tracking-tight text-slate-850 dark:text-slate-100 block leading-none font-sans font-bold">AI INNOVATIONS</span>
-              <span className="text-[9px] font-sans text-blue-600 dark:text-blue-400 tracking-wider uppercase block font-bold leading-none mt-1">COGNITIVE PLATFORM</span>
+              <span className="text-sm font-bold tracking-tight text-slate-850 dark:text-slate-100 block leading-none font-sans font-bold uppercase">OITS Dhaka</span>
+              <span className="text-[9px] font-sans text-blue-600 dark:text-blue-400 tracking-wider uppercase block font-bold leading-none mt-1">ENGINEERING PLATFORM</span>
             </div>
           </Link>
 

@@ -196,12 +196,26 @@ export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = ()
                 aria-label={`${COMPANY_NAME} homepage - Return to Landing Page`}
               >
                 <div
-                  className="w-10 h-10 flex items-center justify-center shrink-0"
+                  className="w-10 h-10 flex items-center justify-center shrink-0 overflow-hidden"
                   aria-hidden="true"
                 >
+                  <img 
+                    src="/oits_logo_hq.png" 
+                    alt="" 
+                    className="w-full h-full object-contain" 
+                    onError={(e) => {
+                      const target = e.target as any;
+                      if (target.src.includes('oits_logo_hq')) {
+                        target.src = '/oits_logo.png';
+                      } else {
+                        target.style.display = 'none';
+                        target.nextSibling.style.display = 'block';
+                      }
+                    }}
+                  />
                   <svg
                     viewBox="0 0 100 100"
-                    className="w-full h-full drop-shadow-sm"
+                    className="w-full h-full drop-shadow-sm hidden"
                   >
                     <defs>
                       <linearGradient
@@ -470,7 +484,7 @@ export const Footer: React.FC<FooterProps> = ({ theme = "dark", toggleTheme = ()
                   label="WhatsApp"
                 />
                 <SocialLink
-                  href="mailto:contact@oitsdhaka.com"
+                  href="mailto:info@oitsdhaka.com"
                   icon={Mail}
                   label="Email"
                 />

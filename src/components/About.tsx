@@ -91,6 +91,24 @@ export const About: React.FC = () => {
               isHeroVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
             }`}
           >
+            {/* Header & Paragraph moved from right column */}
+            <div className="mb-10 lg:mb-12">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="w-5 h-5 text-sky-500 dark:text-sky-400" />
+                <h2 className="text-sm font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest">
+                  About OITS
+                </h2>
+              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-br dark:from-white dark:to-slate-400 leading-tight mb-6">
+                Global Tech Solutions.<br />Enterprise-Ready.
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
+                OITS is your international software engineering partner, delivering secure, scalable solutions across
+                software development, cloud, data, cybersecurity, and blockchain. Our ISO 27001 and GDPR-compliant
+                practices ensure trust at every level.
+              </p>
+            </div>
+
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-800/50 shadow-2xl shadow-sky-500/10 group border border-slate-800/80">
               <img
                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80"
@@ -124,24 +142,6 @@ export const About: React.FC = () => {
                 isMissionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
             >
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Target className="w-5 h-5 text-sky-500 dark:text-sky-400" />
-                  <h2 className="text-sm font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest">
-                    About OITS
-                  </h2>
-                </div>
-                <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-br dark:from-white dark:to-slate-400 leading-tight">
-                  Global Tech Solutions.<br />Enterprise-Ready.
-                </h3>
-              </div>
-
-              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-                OITS is your international software engineering partner, delivering secure, scalable solutions across
-                software development, cloud, data, cybersecurity, and blockchain. Our ISO 27001 and GDPR-compliant
-                practices ensure trust at every level.
-              </p>
-
               {/* Mission Block */}
               <div className="p-5 rounded-2xl bg-blue-50 dark:bg-sky-500/5 border border-blue-100 dark:border-sky-500/20 backdrop-blur-sm">
                 <p className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-sky-400 mb-2">

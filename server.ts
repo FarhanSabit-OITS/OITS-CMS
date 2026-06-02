@@ -652,6 +652,8 @@ DIRECTIONS:
             room: message.room,
             timestamp: new Date().toISOString(),
             isEncrypted: message.isEncrypted !== false,
+            isPinned: false,
+            readBy: [message.senderId],
           };
 
           chatMessagesDb[room].push(messageObj);
@@ -673,6 +675,34 @@ DIRECTIONS:
           activeClients.forEach(client => {
             if (client.room === room && client.ws !== ws && client.ws.readyState === WebSocket.OPEN) {
               client.ws.send(JSON.stringify({ type: 'typing', username, typing }));
+            }
+          });
+        } else if (payload.type === 'pin') {
+          const { room, messageId, isPinned } = payload;
+          if (chatMessagesDb[room]) {
+            chatMessagesDb[room] = chatMessagesDb[room].map(m => m.id === messageId ? { ...m, isPinned } : m);
+          }
+          activeClients.forEach(client => {
+            if (client.room === room && client.ws.readyState === WebSocket.OPEN) {
+              client.ws.send(JSON.stringify({ type: 'pin_update', messageId, isPinned, room }));
+            }
+          });
+        } else if (payload.type === 'read') {
+          const { room, messageId, readerId } = payload;
+          if (chatMessagesDb[room]) {
+            chatMessagesDb[room] = chatMessagesDb[room].map(m => {
+              if (m.id === messageId) {
+                const currentReadBy = m.readBy || [m.senderId];
+                if (!currentReadBy.includes(readerId)) {
+                  return { ...m, readBy: [...currentReadBy, readerId] };
+                }
+              }
+              return m;
+            });
+          }
+          activeClients.forEach(client => {
+            if (client.room === room && client.ws.readyState === WebSocket.OPEN) {
+              client.ws.send(JSON.stringify({ type: 'read_update', messageId, readerId, room }));
             }
           });
         }

@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Home, ChevronDown, ArrowRight } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, ChevronDown, ArrowRight, Mail, Briefcase, Folder, Zap, Info } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { COMPANY_NAME, NAV_ITEMS } from '../constants';
+
+const IconMap: Record<string, any> = {
+  Home,
+  Briefcase,
+  Folder,
+  Zap,
+  Info
+};
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -22,23 +30,41 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
 
   const BrandLogo = () => (
     <div className="flex items-center gap-2">
-      <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0" aria-hidden="true">
-        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
+      <div className="w-10 h-10 flex items-center justify-center shrink-0 overflow-hidden" aria-hidden="true">
+        {/* We use an image if available, fallback to refined SVG logo matching OITS identity */}
+        <img 
+          src="/oits_logo_hq.png" 
+          alt="" 
+          className="w-full h-full object-contain" 
+          onError={(e) => {
+            const target = e.target as any;
+            if (target.src.includes('oits_logo_hq')) {
+              target.src = '/oits_logo.png';
+            } else {
+              target.style.display = 'none';
+              target.nextSibling.style.display = 'block';
+            }
+          }}
+        />
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm hidden">
           <defs>
             <linearGradient id="header-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#1e3a8a" />
-              <stop offset="50%" stopColor="#2563eb" />
-              <stop offset="100%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#2563eb" />
             </linearGradient>
           </defs>
-          <circle cx="50" cy="50" r="42" fill="none" stroke="url(#header-logo-gradient)" strokeWidth="7" />
-          <path d="M38 32 H48 V68 H38 Z" fill="url(#header-logo-gradient)" />
-          <path d="M54 32 H84 V41 H74 V68 H64 V41 H54 Z" fill="url(#header-logo-gradient)" />
+          <circle cx="50" cy="50" r="45" fill="url(#header-logo-gradient)" />
+          <text x="50" y="65" textAnchor="middle" fill="white" fontSize="40" fontWeight="900" fontFamily="sans-serif">IT</text>
         </svg>
       </div>
-      <span className="text-base xs:text-xl sm:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-800 via-blue-600 to-blue-500 dark:from-blue-400 dark:via-blue-300 dark:to-blue-200 filter drop-shadow-sm">
-        {COMPANY_NAME}
-      </span>
+      <div className="flex flex-col">
+        <span className="text-xl font-black tracking-tighter text-blue-900 dark:text-white leading-none">
+          OITS
+        </span>
+        <span className="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-sky-400 uppercase leading-none mt-0.5">
+          Dhaka Ltd
+        </span>
+      </div>
     </div>
   );
 
@@ -61,28 +87,55 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
         </Link>
  
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1 xl:gap-2" aria-label="Main site navigation">
+        <nav className="hidden md:flex items-center gap-2 lg:gap-4 xl:gap-6" aria-label="Main site navigation">
           {NAV_ITEMS.map((item) => (
             <div key={item.label} className="relative group" onMouseEnter={() => setActiveDropdown(item.label)} onMouseLeave={() => setActiveDropdown(null)}>
               <Link 
                 to={item.href}
-                className={`px-3 xl:px-4 py-2 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-sky-400 hover:bg-blue-50/80 dark:hover:bg-slate-900/40 transition-all duration-300 flex items-center gap-1 ${location.pathname === item.href ? 'text-blue-600' : ''}`}
+                className={`px-3 xl:px-4 py-2.5 rounded-full text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-sky-400 hover:bg-blue-50/80 dark:hover:bg-slate-900/40 transition-all duration-300 flex items-center gap-2.5 ${location.pathname === item.href ? 'bg-blue-50 dark:bg-slate-900/40 text-blue-700 dark:text-sky-400' : ''}`}
               >
-                {item.label === 'Home' ? <Home size={18} /> : item.label}
-                {item.children && <ChevronDown size={14} />}
+                {item.icon && IconMap[item.icon] ? (
+                  <span className="text-blue-600 dark:text-sky-400 opacity-90 transition-transform group-hover:scale-110">
+                    {React.createElement(IconMap[item.icon], { size: 18 })}
+                  </span>
+                ) : item.label === 'Home' ? (
+                  <Home size={18} className="text-blue-600 dark:text-sky-400 opacity-90 transition-transform group-hover:scale-110" />
+                ) : null}
+                <span>{item.label}</span>
+                {item.children && <ChevronDown size={14} className="opacity-50 group-hover:rotate-180 transition-transform duration-300" />}
               </Link>
               
               {item.children && activeDropdown === item.label && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md rounded-xl shadow-xl border border-slate-200 dark:border-slate-800/60 p-2 animate-in fade-in slide-in-from-top-2">
+                <div className="absolute top-full left-0 mt-3 w-56 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800/60 p-2 animate-in fade-in slide-in-from-top-2">
                   {item.children.map(child => (
-                    <Link key={child.label} to={child.href} className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-900/40 rounded-lg">{child.label}</Link>
+                    <Link 
+                      key={child.label} 
+                      to={child.href} 
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-900/60 hover:text-blue-700 dark:hover:text-sky-400 rounded-xl transition-all"
+                    >
+                      {(child as any).icon && IconMap[(child as any).icon] && (
+                        <span className="text-blue-600/70 dark:text-sky-400/70">
+                          {React.createElement(IconMap[(child as any).icon], { size: 16 })}
+                        </span>
+                      )}
+                      <span>{child.label}</span>
+                    </Link>
                   ))}
                 </div>
               )}
             </div>
           ))}
+
+          <Link 
+            to="/contact"
+            className="px-3 xl:px-4 py-2.5 rounded-full text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-sky-400 hover:bg-blue-50/80 dark:hover:bg-slate-900/40 transition-all duration-300 flex items-center gap-2.5 text-sm font-bold"
+            aria-label="Contact Us"
+          >
+            <Mail size={18} className="text-blue-600 dark:text-sky-400 opacity-90" />
+            <span>Contact</span>
+          </Link>
           
-          <div className="ml-2 pl-2 border-l border-slate-200 dark:border-slate-700 flex items-center gap-2">
+          <div className="ml-2 pl-4 border-l border-slate-200 dark:border-slate-700 flex items-center gap-3">
              <button
               onClick={toggleTheme}
               className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-all active:rotate-12"
@@ -90,13 +143,6 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
              >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
              </button>
-             <Link
-               to="/contact"
-               className="inline-flex items-center gap-1.5 whitespace-nowrap px-4 py-2.5 rounded-full text-[10px] tracking-widest font-black text-white bg-blue-600 hover:bg-sky-500 hover:shadow-neon-blue active:scale-95 transition-all duration-300 uppercase"
-               aria-label="Get a quote for your project"
-             >
-               Get a Quote <ArrowRight size={14} aria-hidden="true" />
-             </Link>
           </div>
         </nav>
 
@@ -137,14 +183,31 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
                 <Link 
                   to={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-lg text-lg font-medium text-slate-800 dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all block"
+                  className="px-4 py-3 rounded-lg text-lg font-bold text-slate-800 dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all flex items-center gap-3"
                 >
+                  {item.icon && IconMap[item.icon] ? (
+                    React.createElement(IconMap[item.icon], { size: 20, className: "text-blue-600" })
+                  ) : item.label === 'Home' ? (
+                    <Home size={20} className="text-blue-600" />
+                  ) : null}
                   {item.label}
                 </Link>
                 {item.children && (
-                  <div className="pl-6 flex flex-col gap-1">
+                  <div className="pl-6 pt-1 flex flex-col gap-1 border-l-2 border-blue-100 dark:border-slate-800 ml-6">
                     {item.children.map(child => (
-                      <Link key={child.label} to={child.href} onClick={() => setIsMobileMenuOpen(false)} className="px-4 py-2 text-md text-slate-600 dark:text-slate-400">{child.label}</Link>
+                      <Link 
+                        key={child.label} 
+                        to={child.href} 
+                        onClick={() => setIsMobileMenuOpen(false)} 
+                        className="px-4 py-2.5 text-md font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-3 hover:text-blue-600 transition-colors"
+                      >
+                        {(child as any).icon && IconMap[(child as any).icon] && (
+                          <span className="text-blue-500/60">
+                            {React.createElement(IconMap[(child as any).icon], { size: 16 })}
+                          </span>
+                        )}
+                        {child.label}
+                      </Link>
                     ))}
                   </div>
                 )}

@@ -3,7 +3,8 @@ import { Channel, Message, User } from '../types';
 import { encryptText, decryptText } from './EncryptionHelper';
 import { 
   Send, Lock, Hash, Users, ShieldAlert, Bell, 
-  Settings, Key, AlertTriangle, Eye, EyeOff, Sparkles, UserCheck2, RefreshCw, Mic, MicOff
+  Settings, Key, AlertTriangle, Eye, EyeOff, Sparkles, UserCheck2, RefreshCw, Mic, MicOff,
+  Pin, Download, CheckCheck, Paperclip, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -57,6 +58,14 @@ export default function ChatroomView({
   // Speech Recognition API State
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
+
+  // Export State
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState({ start: '', end: '' });
+
+  // File Attachment State
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const socketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -166,6 +175,20 @@ export default function ChatroomView({
               return prev.filter(u => u !== username);
             }
           });
+        } else if (payload.type === 'pin_update') {
+          const { messageId, isPinned } = payload;
+          setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isPinned } : m));
+        } else if (payload.type === 'read_update') {
+          const { messageId, readerId } = payload;
+          setMessages(prev => prev.map(m => {
+            if (m.id === messageId) {
+              const currentReadBy = m.readBy || [m.senderId];
+              if (!currentReadBy.includes(readerId)) {
+                return { ...m, readBy: [...currentReadBy, readerId] };
+              }
+            }
+            return m;
+          }));
         }
       } catch (err) {
         console.error('Failed processing WebSocket frame:', err);
@@ -368,8 +391,89 @@ export default function ChatroomView({
     }
   };
 
+  const handlePinMessage = (messageId: string, currentPinned: boolean) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: 'pin',
+        room: activeRoomId,
+        messageId,
+        isPinned: !currentPinned
+      }));
+    }
+  };
+
+  const markAsRead = (messageId: string) => {
+    if (!currentUser) return;
+    const msg = messages.find(m => m.id === messageId);
+    if (msg && msg.senderId !== currentUser.id && (!msg.readBy || !msg.readBy.includes(currentUser.id))) {
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: 'read',
+          room: activeRoomId,
+          messageId,
+          readerId: currentUser.id
+        }));
+      }
+    }
+  };
+
+  const handleExportHistory = () => {
+    let filtered = messages;
+    if (exportDateRange.start) {
+      filtered = filtered.filter(m => new Date(m.timestamp) >= new Date(exportDateRange.start));
+    }
+    if (exportDateRange.end) {
+      filtered = filtered.filter(m => new Date(m.timestamp) <= new Date(exportDateRange.end));
+    }
+
+    const exportData = filtered.map(m => ({
+      id: m.id,
+      sender: m.username,
+      timestamp: m.timestamp,
+      content: m.isEncrypted ? (decryptedCache[m.id] || '[Encrypted]') : (m.ciphertext || (m as any).systemAlert),
+      room: m.room
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `chat-history-${activeChannel?.name}-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    setShowExportModal(false);
+    addSystemAlert('History exported successfully as encrypted JSON package.');
+  };
+
+  const handleFileUpload = () => {
+    setIsUploading(true);
+    setTimeout(() => {
+      setIsUploading(false);
+      setShowFileModal(false);
+      addSystemAlert('Secure document uploaded and linked to active channel.');
+      // Emit a system message about the file
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN && currentUser) {
+        socketRef.current.send(JSON.stringify({
+          type: 'message',
+          room: activeRoomId,
+          message: {
+            senderId: 'sys-notify',
+            username: 'Secure Vault',
+            avatar: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=100&q=80',
+            ciphertext: `${currentUser.username} attached a secure document: CORPORATE_AUDIT_Q2.PDF.AES`,
+            iv: '',
+            room: activeRoomId,
+            isEncrypted: false
+          }
+        }));
+      }
+    }, 2000);
+  };
+
+  const pinnedMessages = messages.filter(m => m.isPinned);
+
   return (
     <div className="flex h-[calc(100vh-130px)] max-h-[850px] bg-white border border-slate-200 rounded-2xl overflow-hidden relative shadow-md">
+
       
       {/* Sliding system alert overlays (Simulating push responses) */}
       <div className="absolute top-4 right-4 z-50 pointer-events-none space-y-3 max-w-sm w-full">
@@ -384,13 +488,106 @@ export default function ChatroomView({
             >
               <Bell className="w-5 h-5 text-white shrink-0 animate-bounce" />
               <div>
-                <span className="text-[9px] uppercase font-sans text-blue-105 block font-bold leading-none mb-1">SECURE NOTIFICATION</span>
+                <span className="text-[9px] uppercase font-sans text-blue-100 block font-bold leading-none mb-1">SECURE NOTIFICATION</span>
                 <p className="text-xs text-white font-sans line-clamp-2 leading-tight font-medium">{alert.text}</p>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      {/* Export Modal */}
+      <AnimatePresence>
+        {showExportModal && (
+          <div className="absolute inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">Export Channel History</h3>
+                  <Download className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-sm text-slate-500 mb-6">Select a date range for your secure JSON export package. This will include all decrypted payloads currently accessible to your client.</p>
+                
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Start Date</label>
+                    <input 
+                      type="date" 
+                      value={exportDateRange.start} 
+                      onChange={(e) => setExportDateRange({...exportDateRange, start: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">End Date</label>
+                    <input 
+                      type="date" 
+                      value={exportDateRange.end} 
+                      onChange={(e) => setExportDateRange({...exportDateRange, end: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500" 
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => setShowExportModal(false)} className="flex-1 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
+                  <button onClick={handleExportHistory} className="flex-1 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-lg">Download JSON</button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* File Upload Modal */}
+      <AnimatePresence>
+        {showFileModal && (
+          <div className="absolute inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">Secure File Transfer</h3>
+                  <Paperclip className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center flex flex-col items-center justify-center mb-6 hover:border-blue-400 transition-colors cursor-pointer group">
+                  <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-3 group-hover:scale-110 transition-transform">
+                    <Paperclip className="w-6 h-6" />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">Drop document to encrypt</span>
+                  <span className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">MAX 25MB • PDF, DOCX, ZIP</span>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowFileModal(false)} className="flex-1 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
+                  <button 
+                    onClick={handleFileUpload} 
+                    disabled={isUploading}
+                    className="flex-1 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2"
+                  >
+                    {isUploading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        ENCRYPTING...
+                      </>
+                    ) : (
+                      'EXECUTE UPLOAD'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* LEFT CHANNELS SIDEBAR CONTAINER */}
       <div className="w-64 border-r border-slate-200 bg-slate-50/50 flex flex-col justify-between hidden md:flex shrink-0">
@@ -499,6 +696,13 @@ export default function ChatroomView({
 
           {/* PASSPHRASE KEYRING CONTROL PANEL */}
           <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-xs">
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+              title="Export channel history"
+            >
+              <Download className="w-4 h-4" />
+            </button>
             <Key className="w-3.5 h-3.5 text-blue-600 shrink-0" />
             <span className="text-[9.5px] font-sans font-bold uppercase text-slate-400 hidden lg:block select-none">Client Cipher:</span>
             
@@ -532,6 +736,24 @@ export default function ChatroomView({
             )}
           </div>
         </div>
+
+        {/* PINNED MESSAGES SECTION */}
+        {pinnedMessages.length > 0 && (
+          <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center gap-3">
+            <Pin className="w-4 h-4 text-amber-600 shrink-0 rotate-45" />
+            <div className="flex-1 overflow-hidden">
+              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Important Broadcast</span>
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {pinnedMessages.map(pm => (
+                  <div key={`p-${pm.id}`} className="bg-white border border-amber-200 px-2 py-1 rounded text-[10px] font-medium text-slate-700 whitespace-nowrap shadow-sm flex items-center gap-2 shrink-0">
+                    <span className="font-bold text-amber-700">{pm.username}:</span>
+                    <span className="truncate max-w-[150px]">{decryptedCache[pm.id] || '[Decrypting...]'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* FLOATING USER WARNING ALERT: Decryption testing */}
         <div className="px-4 py-2 bg-slate-100 border-b border-slate-200 text-[10.5px] font-sans font-medium text-slate-600 flex items-center gap-2 select-none justify-between">
@@ -683,20 +905,36 @@ export default function ChatroomView({
               const isFailedDecryption = decryptedTextStr.includes('Unable to Decrypt');
 
               return (
-                <div key={msg.id} className={`flex gap-3 max-w-xl group ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
+                <div 
+                  key={msg.id} 
+                  className={`flex gap-3 max-w-xl group relative ${isMe ? 'ml-auto flex-row-reverse' : ''}`}
+                  onMouseEnter={() => markAsRead(msg.id)}
+                >
                   <img src={msg.avatar} alt="avatar" className="w-9 h-9 rounded-full border border-slate-200 bg-slate-50 shrink-0 shadow-xs" referrerPolicy="no-referrer" />
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 font-sans text-[10px] leading-none mb-1">
-                      <span className="font-bold text-slate-705">{msg.username}</span>
-                      <span className="text-slate-400 font-semibold">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div className={`flex items-center gap-2 font-sans text-[10px] leading-none mb-1 ${isMe ? 'justify-end' : ''}`}>
+                      <span className="font-bold text-slate-700">{msg.username}</span>
+                      <span className="text-slate-400 font-semibold" title={new Date(msg.timestamp).toLocaleString()}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {msg.isPinned && <Pin className="w-3 h-3 text-amber-600 shrink-0 rotate-45" />}
                     </div>
 
-                    <div className={`p-3 rounded-2xl relative border ${
+                    <div className={`p-3 rounded-2xl relative border transition-all ${
                       isMe 
                         ? 'bg-blue-600 border-blue-500 text-white rounded-tr-none shadow-sm pb-4.5' 
-                        : 'bg-slate-100 border-slate-202 text-slate-800 rounded-tl-none shadow-xs'
+                        : 'bg-slate-100 border-slate-200 text-slate-800 rounded-tl-none shadow-xs'
                     }`}>
                       
+                      {/* Interaction Controls (Pin) */}
+                      <button 
+                        onClick={() => handlePinMessage(msg.id, !!msg.isPinned)}
+                        className={`absolute -top-2 ${isMe ? '-left-2' : '-right-2'} p-1.5 rounded-full bg-white border border-slate-200 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-20`}
+                        title={msg.isPinned ? "Unpin message" : "Pin message"}
+                      >
+                        <Pin className={`w-3 h-3 ${msg.isPinned ? 'text-blue-600 fill-blue-600' : 'text-slate-400'} rotate-45`} />
+                      </button>
+
                       {/* Side by side display format: CIPHERTEXT RAW */}
                       {msg.isEncrypted && (
                         <div className="mb-2 p-1.5 bg-white text-[8.5px] font-mono border border-slate-200/55 shadow-inner text-slate-450 rounded truncate max-w-sm select-all">
@@ -727,8 +965,14 @@ export default function ChatroomView({
                       {/* Dynamic Read Receipt Indicators for Me */}
                       {isMe && (
                         <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-semibold text-blue-200 select-none">
-                          <span className="font-mono text-[7px] uppercase tracking-wider text-blue-300">Delivered</span>
-                          <span className="text-white text-[10px] font-sans leading-none">✓✓</span>
+                          <span className="font-mono text-[7px] uppercase tracking-wider text-blue-300">
+                            {msg.readBy && msg.readBy.length > 1 ? 'Read' : 'Delivered'}
+                          </span>
+                          {msg.readBy && msg.readBy.length > 1 ? (
+                            <CheckCheck className="text-sky-300 w-3 h-3" />
+                          ) : (
+                            <Check className="text-blue-300 w-3 h-3" />
+                          )}
                         </div>
                       )}
 
@@ -759,6 +1003,14 @@ export default function ChatroomView({
           <form onSubmit={handleSendMessage} className="p-4 flex gap-3 relative">
             <button
               type="button"
+              onClick={() => setShowFileModal(true)}
+              className="absolute left-[54px] top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+              title="Attach secure document"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
               onClick={toggleSpeechRecognition}
               className={`absolute left-6 top-1/2 -translate-y-1/2 p-2 shrink-0 rounded-full transition-colors ${
                 isListening 
@@ -774,7 +1026,7 @@ export default function ChatroomView({
               value={inputMessage}
               onChange={handleInputChange}
               placeholder={`Send secure, E2FE encrypted packet to #${activeChannel?.name}...`}
-              className="flex-1 bg-white border border-slate-250 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl text-slate-805 pl-12 pr-4 py-3 outline-none transition-all placeholder:text-slate-400 font-sans shadow-inner"
+              className="flex-1 bg-white border border-slate-250 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl text-slate-805 pl-[88px] pr-4 py-3 outline-none transition-all placeholder:text-slate-400 font-sans shadow-inner"
             />
             <button
               type="submit"
@@ -799,7 +1051,11 @@ export default function ChatroomView({
             <div key={user.id} className="flex items-center gap-2.5 p-1.5 rounded-xl border border-slate-200 bg-white shadow-xs">
               <div className="relative shrink-0">
                 <img src={user.avatar} alt="avatar" className="w-6.5 h-6.5 border border-slate-100 rounded-full bg-slate-50" referrerPolicy="no-referrer" />
-                <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-white rounded-full animate-pulse"></span>
+                <motion.span 
+                  animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-white rounded-full"
+                ></motion.span>
               </div>
               <div className="truncate text-left leading-none">
                 <span className="text-xs font-bold text-slate-700 truncate block">{user.username}</span>

@@ -215,16 +215,28 @@ export const INITIAL_CMS_BLOCKS: CMSBlock[] = [
 export const COMPANY_NAME = 'AI Innovations';
 export const TAGLINE = 'Enterprise AI Engineering. Crafted for Scale.';
 export const ADDRESS = 'House # 42, Road # 2/A, Block # Z, Dhanmondi, Dhaka 1209, Bangladesh';
-export const CONTACT_EMAIL = 'contact@ai-innovations.co';
+export const CONTACT_EMAIL = 'info@oitsdhaka.com';
 export const PHONE = '+880 2 9662026';
 
-export const NAV_ITEMS: { label: string; href: string; children?: { label: string; href: string }[] }[] = [
-  { label: 'Home', href: '/' },
-  { label: 'Services', href: '/services' },
-  { label: 'Portfolio', href: '/portfolio' },
-  { label: 'Workflow', href: '/workflow' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' }
+export const NAV_ITEMS: { label: string; href: string; icon?: string; children?: { label: string; href: string; icon?: string }[] }[] = [
+  { label: 'Home', href: '/', icon: 'Home' },
+  { 
+    label: 'Services', 
+    href: '/services', 
+    icon: 'Briefcase',
+    children: [
+      { label: 'Workflow', href: '/workflow', icon: 'Zap' }
+    ]
+  },
+  { 
+    label: 'Portfolio', 
+    href: '/portfolio', 
+    icon: 'Folder',
+    children: [
+      { label: 'About', href: '/about', icon: 'Info' },
+      { label: 'Contact', href: '/contact', icon: 'Mail' }
+    ]
+  }
 ];
 
 export const TECH_DOMAINS = [

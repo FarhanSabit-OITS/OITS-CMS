@@ -8,6 +8,17 @@ export interface Message {
   room: string;
   timestamp: string;
   isEncrypted: boolean;
+  isPinned?: boolean;
+  readBy?: string[];
+}
+
+export interface SecurityLog {
+  id: string;
+  timestamp: string;
+  ip: string;
+  action: string;
+  status: 'success' | 'failure';
+  type: 'LOGIN' | 'MFA' | 'SIGN';
 }
 
 export interface User {
@@ -21,6 +32,7 @@ export interface User {
   twoFactorVerified?: boolean;
   blockedUsers?: string[];
   pushEnabled?: boolean;
+  securityLogs?: SecurityLog[];
 }
 
 export interface Channel {

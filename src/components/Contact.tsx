@@ -86,7 +86,7 @@ export const Contact: React.FC = () => {
         setErrors({});
         setTimeout(() => setStatus("idle"), 8000);
       }
-    }, 2500);
+    }, 1000);
   };
 
   const mapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3652.123456789012!2d90.3644321!3d23.7431234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDQ0JzM1LjIiTiA5MMKwMjEnNTEuOSJF!5e0!3m2!1sen!2sbd!4v1234567890123`;
@@ -185,7 +185,7 @@ export const Contact: React.FC = () => {
                     onClick={() => setStatus("idle")}
                     className="rounded-xl px-4 h-10 border font-black text-xs flex items-center gap-2"
                   >
-                    <RefreshCcw size={14} /> RE-INITIATE
+                    <RefreshCcw size={14} /> RE-INNITIATE
                   </Button>
                 </div>
               ) : (
@@ -306,7 +306,7 @@ export const Contact: React.FC = () => {
                         </div>
                       ) : (
                         <span className="flex items-center gap-4 group text-sm font-black">
-                          INITIATE CONNECTION
+                          INNITIATE
                           <Send
                             size={24}
                             className="transform rotate-12 transition-transform duration-300 group-hover:translate-x-2 group-hover:-translate-y-2"

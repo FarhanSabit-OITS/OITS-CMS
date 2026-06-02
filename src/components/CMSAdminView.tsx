@@ -63,6 +63,9 @@ export default function CMSAdminView({
   const [chanName, setChanName] = useState('');
   const [chanDesc, setChanDesc] = useState('');
   
+  // Commit tracking
+  const [commitMessage, setCommitMessage] = useState('');
+  
   // Status states
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -155,15 +158,19 @@ export default function CMSAdminView({
     e.preventDefault();
     setSaving(true);
     setSuccessMsg(null);
-    const success = await onUpdateCmsBlock({
-      ...block,
-      content: blockContent
-    });
-    setSaving(false);
-    if (success) {
-      setSuccessMsg('Website block content updated successfully.');
-      setTimeout(() => setSuccessMsg(null), 3000);
-      setSelectedBlockId(null);
+    try {
+      const success = await onUpdateCmsBlock({
+        ...block,
+        content: blockContent
+      });
+      if (success) {
+        setSuccessMsg('Website block content updated successfully.');
+        setTimeout(() => setSuccessMsg(null), 3000);
+        setSelectedBlockId(null);
+        setCommitMessage('');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -195,23 +202,30 @@ export default function CMSAdminView({
       payload.id = editingProductId;
     }
 
-    const success = await onUpdateProduct(payload);
-    setSaving(false);
-    if (success) {
-      setSuccessMsg(editingProductId === 'new' ? 'New AI Solution Catalog created.' : 'AI Solution Catalog listing updated.');
-      setTimeout(() => setSuccessMsg(null), 3000);
-      setEditingProductId(null);
+    try {
+      const success = await onUpdateProduct(payload);
+      if (success) {
+        setSuccessMsg(editingProductId === 'new' ? 'New AI Solution Catalog created.' : 'AI Solution Catalog listing updated.');
+        setTimeout(() => setSuccessMsg(null), 3000);
+        setEditingProductId(null);
+        setCommitMessage('');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDeleteProductClick = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this AI solution listing? This is irreversible.')) return;
     setSaving(true);
-    const success = await onDeleteProduct(id);
-    setSaving(false);
-    if (success) {
-      setSuccessMsg('Solution listing successfully expunged.');
-      setTimeout(() => setSuccessMsg(null), 3000);
+    try {
+      const success = await onDeleteProduct(id);
+      if (success) {
+        setSuccessMsg('Solution listing successfully expunged.');
+        setTimeout(() => setSuccessMsg(null), 3000);
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -220,13 +234,16 @@ export default function CMSAdminView({
     if (!chanName.trim()) return;
 
     setSaving(true);
-    const success = await onAddChannel(chanName.trim(), chanDesc.trim());
-    setSaving(false);
-    if (success) {
-      setSuccessMsg(`Secure Channel #${chanName} successfully instantiated.`);
-      setTimeout(() => setSuccessMsg(null), 3000);
-      setChanName('');
-      setChanDesc('');
+    try {
+      const success = await onAddChannel(chanName.trim(), chanDesc.trim());
+      if (success) {
+        setSuccessMsg(`Secure Channel #${chanName} successfully instantiated.`);
+        setTimeout(() => setSuccessMsg(null), 3000);
+        setChanName('');
+        setChanDesc('');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -426,6 +443,18 @@ export default function CMSAdminView({
                       </div>
 
                       <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-slate-550 font-sans mb-1 font-bold">Commit message (Required for Audit Trail)</label>
+                        <input
+                          type="text"
+                          value={commitMessage}
+                          onChange={(e) => setCommitMessage(e.target.value)}
+                          placeholder="Briefly describe why this change is being made..."
+                          className="w-full bg-white border border-slate-200 text-xs rounded px-2.5 py-1.5 text-slate-700 outline-none focus:border-blue-500 font-sans font-medium"
+                          required
+                        />
+                      </div>
+
+                      <div>
                         <label className="block text-[9px] uppercase tracking-wider text-slate-550 font-sans mb-1 font-bold">Launch status</label>
                         <select
                           value={prodStatus}
@@ -449,10 +478,10 @@ export default function CMSAdminView({
                       </button>
                       <button
                         type="submit"
-                        disabled={saving}
-                        className="text-[10px] font-sans font-bold px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-550 shadow-xs"
+                        disabled={saving || commitMessage.trim().length === 0}
+                        className="text-[10px] font-sans font-bold px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-550 shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {saving ? 'UPDATING...' : 'COMMIT Specifications'}
+                        {saving ? 'UPDATING...' : 'COMMIT STAGED CHANGES'}
                       </button>
                     </div>
                   </form>
@@ -518,20 +547,34 @@ export default function CMSAdminView({
                               onChange={(e) => setBlockContent(e.target.value)}
                               className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs rounded-xl p-2.5 text-slate-805 outline-none leading-relaxed font-sans"
                             />
+                            <div className="space-y-1">
+                              <label className="block text-[9px] uppercase tracking-wider text-slate-550 font-sans mb-1 font-bold">Commit message (Audit Trail)</label>
+                              <input
+                                type="text"
+                                value={commitMessage}
+                                onChange={(e) => setCommitMessage(e.target.value)}
+                                placeholder="Describe this content update..."
+                                className="w-full bg-white border border-slate-200 text-xs rounded px-2.5 py-1.5 text-slate-700 outline-none focus:border-blue-500 font-sans font-medium"
+                                required
+                              />
+                            </div>
                             <div className="flex gap-2 justify-end">
                               <button
                                 type="button"
-                                onClick={() => setSelectedBlockId(null)}
+                                onClick={() => {
+                                  setSelectedBlockId(null);
+                                  setCommitMessage('');
+                                }}
                                 className="text-[9px] font-mono px-3.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold"
                               >
                                 CANCEL
                               </button>
                               <button
                                 type="submit"
-                                disabled={saving}
-                                className="text-[9px] font-sans font-bold px-4 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-550"
+                                disabled={saving || commitMessage.trim().length === 0}
+                                className="text-[9px] font-sans font-bold px-4 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-550 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {saving ? 'UPDATING...' : 'COMMIT CMS BLOCK'}
+                                {saving ? 'UPDATING...' : 'COMMIT STAGED CHANGES'}
                               </button>
                             </div>
                           </form>

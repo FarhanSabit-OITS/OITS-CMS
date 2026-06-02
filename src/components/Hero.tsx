@@ -232,7 +232,7 @@ export const Hero: React.FC = () => {
                 aria-label="Get a quote for your project"
               >
                 <div className="flex flex-row items-center gap-2">
-                  LEARN MORE <ArrowRight className="transition-transform duration-300 group-hover:translate-x-2" size={16} aria-hidden="true" />
+                  GET QUOTE <ArrowRight className="transition-transform duration-300 group-hover:translate-x-2" size={16} aria-hidden="true" />
                 </div>
               </Button>
               <Button 
